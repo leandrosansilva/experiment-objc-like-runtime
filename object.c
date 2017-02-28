@@ -112,46 +112,10 @@ static struct Object* alloc_selector(struct Object* self, va_list arguments)
 	return obj;
 }
 
-void classInitializer(struct Class_Object* klass)
+static struct Object* release_object_selector(struct Object* self, va_list arguments)
 {
-	klass->objectName = "Class";
-	obj_add_selector(klass, "alloc", alloc_selector);
-}
+	struct Object** object = va_arg(arguments, struct Object*);
 
-static void classStaticInitializer(struct Class_Object* klass)
-{
-	klass->objectName = NULL;
-}
-
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super, bool createStatic)
-{
-	klass->proto.tag = obj_runtime_type_class;
-
-	if (createStatic) {
-		struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
-		privInitializeClass(class_with_class_methods, classStaticInitializer, &_Class, false);
-		klass->proto.klass = class_with_class_methods;
-	} else {
-		klass->proto.klass = &_Object;
-	}
-
-	klass->super = super;
-
-	klass->selectors = NULL;
-
-	if (initializer != NULL) {
-		initializer(klass);
-	}
-
-}
-
-void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
-{
-	privInitializeClass(klass, initializer, super, true);
-}
-
-void releaseObject(struct Object** object)
-{
 	if (object == NULL) {
 		return;
 	}
@@ -164,6 +128,44 @@ void releaseObject(struct Object** object)
 	free(*object);
 
 	*object = NULL;
+}
+
+void classInitializer(struct Class_Object* klass)
+{
+	klass->objectName = "Class";
+	obj_add_selector(klass, "alloc", alloc_selector);
+	obj_add_selector(klass, "releaseObject", release_object_selector);
+}
+
+static void classStaticInitializer(struct Class_Object* klass)
+{
+	klass->objectName = NULL;
+}
+
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super, bool createStatic);
+
+static struct Class_Object* createClassWithStaticMethods()
+{
+		struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
+		privInitializeClass(class_with_class_methods, classStaticInitializer, &_Class, false);
+		return class_with_class_methods;
+}
+
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super, bool createStatic)
+{
+	klass->proto.tag = obj_runtime_type_class;
+	klass->proto.klass = createStatic ? createClassWithStaticMethods() : &_Object;
+	klass->super = super;
+	klass->selectors = NULL;
+
+	if (initializer != NULL) {
+		initializer(klass);
+	}
+}
+
+void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
+{
+	privInitializeClass(klass, initializer, super, true);
 }
 
 static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)

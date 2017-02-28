@@ -25,13 +25,14 @@ int main(int argc, char** argv)
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");
 	
-	releaseObject(&format);
-	releaseObject(&name);
-	releaseObject(&length);
-	releaseObject(&formattedString);
-	releaseObject(&stringDescription);
-	releaseObject(&numberDescription);
+	obj_send_message(Object(), "releaseObject", &format);
+	obj_send_message(Object(), "releaseObject", &name);
+	obj_send_message(Object(), "releaseObject", &length);
+	obj_send_message(Object(), "releaseObject", &formattedString);
+	obj_send_message(Object(), "releaseObject", &stringDescription);
+	obj_send_message(Object(), "releaseObject", &numberDescription);
 
+	unloadClass(Class());
 	unloadClass(Object());
 	unloadClass(String());
 	unloadClass(Number());
