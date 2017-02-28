@@ -1,16 +1,24 @@
 #include "object.h"
 #include "String.h"
+#include "Number.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
-static struct Class_Object _Object_Class_Instance;
+static struct Class_Object _Object;
+static struct Class_Object _Class;
 
-struct Class_Object* Object_Class_Instance()
+struct Class_Object* Object()
 {
-	return &_Object_Class_Instance;
+	return &_Object;
+}
+
+struct Class_Object* Class()
+{
+	return &_Class;
 }
 
 // NOTE: linked list. No need to say how inefficient it is :-)
@@ -33,6 +41,11 @@ void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_
 	klass->selectors = pair;
 }
 
+void obj_add_class_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector)
+{
+	obj_add_selector(klass->proto.klass, selectorName, selector);
+}
+
 obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName)
 {
 	// NOTE: this is the worst implementation of method lookup ever!
@@ -49,6 +62,10 @@ obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selec
 
 struct Object* obj_send_message(struct Object* obj, const char* selectorName, ...)
 {
+	if (obj == NULL) {
+		return NULL;
+	}
+
 	obj_selector selector = obj_selector_for_name(obj->klass, selectorName);
 
 	if (selector == NULL) {
@@ -65,26 +82,72 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 
 static struct String* description_selector(struct Object* self, va_list arguments)
 {
-	struct String* nameAsDescription = obj_send_message(allocString(), "initWithString", self->klass->objectName);
+	struct String* nameAsDescription = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", self->klass->objectName);
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
 void objectInitializer(struct Class_Object* klass)
 {
+	klass->objectName = "Object";
 	obj_add_selector(klass, "description", description_selector);
 }
 
-void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
+static struct Object* alloc_selector(struct Object* self, va_list arguments)
 {
-	klass->tag = obj_runtime_type_class;
-	klass->selectors = NULL;
-	klass->objectName = "Object";
+	size_t size = 0;
+
+	obj_send_message(self, "objectSize", &size);
+
+	if (size == 0) {
+		return NULL;
+	}
+
+	assert(size >= sizeof(struct Object) && "Object is too small!");
+
+	struct Object* obj = malloc(size);
+	obj->tag = obj_runtime_type_object;
+
+	obj->klass = (struct Class_Object*)self;
+
+	return obj;
+}
+
+void classInitializer(struct Class_Object* klass)
+{
+	klass->objectName = "Class";
+	obj_add_selector(klass, "alloc", alloc_selector);
+}
+
+static void classStaticInitializer(struct Class_Object* klass)
+{
+	klass->objectName = NULL;
+}
+
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super, bool createStatic)
+{
+	klass->proto.tag = obj_runtime_type_class;
+
+	if (createStatic) {
+		struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
+		privInitializeClass(class_with_class_methods, classStaticInitializer, &_Class, false);
+		klass->proto.klass = class_with_class_methods;
+	} else {
+		klass->proto.klass = &_Object;
+	}
 
 	klass->super = super;
+
+	klass->selectors = NULL;
 
 	if (initializer != NULL) {
 		initializer(klass);
 	}
+
+}
+
+void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
+{
+	privInitializeClass(klass, initializer, super, true);
 }
 
 void releaseObject(struct Object** object)
@@ -114,17 +177,9 @@ static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelecto
 	}
 }
 
-// wraps malloc
-void* allocObject(size_t size)
-{
-	assert(size >= sizeof(struct Object) && "Object is too small!");
-	struct Object* obj = malloc(size);
-	obj->tag = obj_runtime_type_object;
-	obj->klass = &_Object_Class_Instance;
-	return (void*)obj;
-}
-
 void unloadClass(struct Class_Object* klass)
 {
+	deleteClassSelector(klass->proto.klass, klass->proto.klass->selectors);
+	free(klass->proto.klass);
 	deleteClassSelector(klass, klass->selectors);
 }

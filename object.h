@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 struct Object;
+struct Class_Object;
 
 typedef struct Object* (*obj_selector)(struct Object*, va_list);
 
@@ -17,23 +18,25 @@ enum obj_runtime_type
 
 typedef unsigned char obj_runtime_type;
 
-struct Class_Object
-{
-	obj_runtime_type tag;
-	struct Class_Object* super;
-	struct ObjectSelectorPair* selectors;
-	const char* objectName;
-};
-
 struct Object
 {
 	obj_runtime_type tag;
-	struct Class_Object *klass;
+	struct Class_Object* klass;
+};
+
+struct Class_Object
+{
+	struct Object proto;
+	struct Class_Object* super;
+	const char* objectName;
+	struct ObjectSelectorPair* selectors;
 };
 
 typedef void (*obj_class_initializer)(struct Class_Object*);
 
 void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector);
+
+void obj_add_class_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector);
 
 obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName);
 
@@ -41,12 +44,14 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 
 void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super);
 
-struct Class_Object* Object_Class_Instance();
+struct Class_Object* Object();
+
+struct Class_Object* Class();
 
 void releaseObject(struct Object** object);
-
-void* allocObject(size_t size);
 
 void unloadClass(struct Class_Object* klass);
 
 void objectInitializer(struct Class_Object* klass);
+
+void classInitializer(struct Class_Object* klass);

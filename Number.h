@@ -14,8 +14,6 @@ struct Number
 	int value;
 };
 
-struct Number* allocNumber();
-
 void numberInitializer(struct Class_Number* klass);
 
-struct Class_Number* Number_Class_Instance();
+struct Class_Number* Number();

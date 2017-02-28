@@ -13,8 +13,6 @@ struct String
 	char* content;
 };
 
-struct String* allocString();
-
-struct Class_String* String_Class_Instance();
+struct Class_String* String();
 
 void stringInitializer(struct Class_String* klass);
