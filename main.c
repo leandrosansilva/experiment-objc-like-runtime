@@ -7,14 +7,9 @@ int main(int argc, char** argv)
 	(void)argc;
 	(void)argv;
 
-	loadClassObject();
-	initializeObject(Object_Class_Instance());
-
-	loadClassString();
-	initializeString(String_Class_Instance());
-
-	loadClassNumber();
-	initializeNumber(Number_Class_Instance());
+	initializeClass(Object_Class_Instance(), NULL, NULL);
+	initializeClass(String_Class_Instance(), stringInitializer, Object_Class_Instance());
+	initializeClass(Number_Class_Instance(), numberInitializer, Object_Class_Instance());
 
 	struct String* name = obj_send_message(allocString(), "initWithString", "Leandro");
 	
@@ -26,15 +21,16 @@ int main(int argc, char** argv)
 
 	struct String* formattedString = obj_send_message(allocString(), "initWithFormat", format, name, length); 
 	
-	printf("Formatted string: %s\n", formattedString->content);
-
+	// TODO: rename to release Object and receive an object address,
+	// so we can manage memory automatically
+	deleteObject(format);
 	deleteObject(name);
 	deleteObject(length);
 	deleteObject(formattedString);
 
-	unloadClassString();
-	unloadClassNumber();
-	unloadClassObject();
+	unloadClass(Object_Class_Instance());
+	unloadClass(String_Class_Instance());
+	unloadClass(Number_Class_Instance());
 
 	return 0;
 }

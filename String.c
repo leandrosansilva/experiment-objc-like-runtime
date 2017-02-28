@@ -12,21 +12,12 @@ struct Class_String* String_Class_Instance()
 	return &_String_Class_Instance;
 }
 
-void loadClassString()
-{
-}
-
 struct String* allocString()
 {
-	struct String* string = malloc(sizeof(struct String));
-	string->klass = &_String_Class_Instance;
+	struct String* string = allocObject(sizeof(struct String));
+	string->super.klass = &_String_Class_Instance;
 	string->content = NULL;
 	return string;
-}
-
-void unloadClassString()
-{
-	deleteClassSelector(&_String_Class_Instance, _String_Class_Instance.super.selectors);
 }
 
 // Selectors
@@ -58,9 +49,8 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 	return self;
 }
 
-void initializeString(struct Class_String* klass)
+void stringInitializer(struct Class_String* klass)
 {
-	initializeObject(klass);
 	klass->super.objectName = "String";
 
 	obj_add_selector(klass, "length", string_length_selector);

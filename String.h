@@ -9,16 +9,12 @@ struct Class_String
 
 struct String
 {
-	struct Class_String* klass;
+	struct Object super;
 	char* content;
 };
 
-void loadClassString();
-
 struct String* allocString();
-
-void initializeString(struct Class_String* klass);
 
 struct Class_String* String_Class_Instance();
 
-void unloadClassString();
+void stringInitializer(struct Class_String* klass);

@@ -10,16 +10,12 @@ struct Class_Number
 
 struct Number
 {
-	struct Class_Number* klass;
+	struct Object super;
 	int value;
 };
 
-void loadClassNumber();
-
 struct Number* allocNumber();
 
-void initializeNumber(struct Class_Number* klass);
+void numberInitializer(struct Class_Number* klass);
 
 struct Class_Number* Number_Class_Instance();
-
-void unloadClassNumber();

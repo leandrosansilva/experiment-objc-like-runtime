@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 static struct Class_Object _Object_Class_Instance;
 
@@ -57,22 +58,27 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 	return result;
 }
 
-void loadClassObject()
-{
-}
-
 static struct String* description_selector(struct Object* self, va_list arguments)
 {
 	struct String* nameAsDescription = obj_send_message(allocString(), "initWithString", self->klass->objectName);
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
-void initializeObject(struct Class_Object* klass)
+void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
 {
+	klass->tag = obj_runtime_type_class;
 	klass->selectors = NULL;
 	klass->objectName = "Object";
 
+	if (super != NULL) {
+		// Handle super!!!!
+	}
+
 	obj_add_selector(klass, "description", description_selector);
+
+	if (initializer != NULL) {
+		initializer(klass);
+	}
 }
 
 void deleteObject(struct Object* object)
@@ -92,7 +98,17 @@ void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* 
 	}
 }
 
-void unloadClassObject(struct Class_Object* klass)
+// wraps malloc
+void* allocObject(size_t size)
+{
+	assert(size >= sizeof(struct Object) && "Object is too small!");
+	struct Object* obj = malloc(size);
+	obj->tag = obj_runtime_type_object;
+	obj->klass = &_Object_Class_Instance;
+	return (void*)obj;
+}
+
+void unloadClass(struct Class_Object* klass)
 {
 	deleteClassSelector(klass, klass->selectors);
 }
