@@ -3,10 +3,7 @@
 #include "object.h"
 #include <stdint.h>
 
-struct Class_Number
-{
-	struct Class_Object super;
-};
+struct Class_Number;
 
 struct Number
 {

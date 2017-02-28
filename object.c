@@ -105,6 +105,8 @@ static struct Object* alloc_selector(struct Object* self, va_list arguments)
 	assert(size >= sizeof(struct Object) && "Object is too small!");
 
 	struct Object* obj = malloc(size);
+	memset(obj, 0, size);
+
 	obj->tag = obj_runtime_type_object;
 
 	obj->klass = (struct Class_Object*)self;

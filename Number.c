@@ -1,6 +1,11 @@
 #include "Number.h"
 #include <stdlib.h>
 
+struct Class_Number
+{
+	struct Class_Object super;
+};
+
 static struct Class_Number _Number;
 
 struct Class_Number* Number()

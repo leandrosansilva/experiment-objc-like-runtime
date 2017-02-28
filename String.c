@@ -5,6 +5,11 @@
 #include <string.h>
 #include <stdio.h>
 
+struct Class_String
+{
+	struct Class_Object super;
+};
+
 static struct Class_String _String;
 
 struct Class_String* String()

@@ -2,10 +2,7 @@
 
 #include "object.h"
 
-struct Class_String
-{
-	struct Class_Object super;
-};
+struct Class_String;
 
 struct String
 {
