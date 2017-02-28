@@ -13,6 +13,8 @@ struct Class_Object* Object_Class_Instance()
 	return &_Object_Class_Instance;
 }
 
+// NOTE: linked list. No need to say how inefficient it is :-)
+// It should be replaced by an array based hash map, but who cares?
 struct ObjectSelectorPair
 {
 	const char* selectorName;
@@ -33,9 +35,12 @@ void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_
 
 obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName)
 {
-	for (struct ObjectSelectorPair* pair = klass->selectors; pair != NULL; pair = pair->next) {
-		if (strcmp(pair->selectorName, selectorName) == 0) {
-			return pair->selector;
+	// NOTE: this is the worst implementation of method lookup ever!
+	for (struct Class_Object* k = klass; k != NULL; k = k->super) {
+		for (struct ObjectSelectorPair* pair = k->selectors; pair != NULL; pair = pair->next) {
+			if (strcmp(pair->selectorName, selectorName) == 0) {
+				return pair->selector;
+			}
 		}
 	}
 
@@ -64,30 +69,41 @@ static struct String* description_selector(struct Object* self, va_list argument
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
+void objectInitializer(struct Class_Object* klass)
+{
+	obj_add_selector(klass, "description", description_selector);
+}
+
 void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
 {
 	klass->tag = obj_runtime_type_class;
 	klass->selectors = NULL;
 	klass->objectName = "Object";
 
-	if (super != NULL) {
-		// Handle super!!!!
-	}
-
-	obj_add_selector(klass, "description", description_selector);
+	klass->super = super;
 
 	if (initializer != NULL) {
 		initializer(klass);
 	}
 }
 
-void deleteObject(struct Object* object)
+void releaseObject(struct Object** object)
 {
-	obj_send_message(object, "dealloc");
-	free(object);
+	if (object == NULL) {
+		return;
+	}
+
+	if (*object == NULL) {
+		return;
+	}
+
+	obj_send_message(*object, "dealloc");
+	free(*object);
+
+	*object = NULL;
 }
 
-void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)
+static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)
 {
 	struct ObjectSelectorPair* tmp;
 

@@ -20,11 +20,8 @@ typedef unsigned char obj_runtime_type;
 struct Class_Object
 {
 	obj_runtime_type tag;
-
-	// NOTE: linked list. No need to say how inefficient it is :-)
-	// It should be replaced by an array based hash map, but who cares?
+	struct Class_Object* super;
 	struct ObjectSelectorPair* selectors;
-
 	const char* objectName;
 };
 
@@ -46,10 +43,10 @@ void initializeClass(struct Class_Object* klass, obj_class_initializer initializ
 
 struct Class_Object* Object_Class_Instance();
 
-void deleteObject(struct Object* object);
-
-void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair);
+void releaseObject(struct Object** object);
 
 void* allocObject(size_t size);
 
 void unloadClass(struct Class_Object* klass);
+
+void objectInitializer(struct Class_Object* klass);
