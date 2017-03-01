@@ -48,8 +48,6 @@ struct Class_Object* Object();
 
 struct Class_Object* Class();
 
-void releaseObject(struct Object** object);
-
 void unloadClass(struct Class_Object* klass);
 
 void objectInitializer(struct Class_Object* klass);

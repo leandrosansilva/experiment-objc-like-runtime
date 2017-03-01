@@ -119,11 +119,11 @@ static struct Object* release_object_selector(struct Object* self, va_list argum
 	struct Object** object = va_arg(arguments, struct Object*);
 
 	if (object == NULL) {
-		return;
+		return NULL;
 	}
 
 	if (*object == NULL) {
-		return;
+		return NULL;
 	}
 
 	obj_send_message(*object, "dealloc");
