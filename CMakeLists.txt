@@ -8,7 +8,7 @@ add_library(
 	object_like
 	SHARED
 	runtime.c
-	object.c
+	Object.c
 	String.c
 	Number.c
 	)

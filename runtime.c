@@ -1,5 +1,5 @@
 #include "runtime.h"
-#include "object.h"
+#include "Object.h"
 
 #include <stdlib.h>
 #include <string.h>

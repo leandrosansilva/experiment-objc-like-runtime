@@ -1,6 +1,6 @@
 #pragma once
 
-#include "object.h"
+#include "Object.h"
 #include <stdint.h>
 
 struct Class_Number;
