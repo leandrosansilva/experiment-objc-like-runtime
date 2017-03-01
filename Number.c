@@ -27,7 +27,7 @@ static struct Number* init_with_integer(struct Number* self, va_list arguments)
 	return self;
 }
 
-void numberInitializer(struct Class_Number* klass)
+void obj_number_initializer(struct Class_Number* klass)
 {
 	klass->super.objectName = "Number";
 

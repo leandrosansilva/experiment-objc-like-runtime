@@ -11,6 +11,6 @@ struct Number
 	int value;
 };
 
-void numberInitializer(struct Class_Number* klass);
+void obj_number_initializer(struct Class_Number* klass);
 
 struct Class_Number* Number();

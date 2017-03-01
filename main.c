@@ -8,10 +8,10 @@ int main(int argc, char** argv)
 	(void)argc;
 	(void)argv;
 
-	initializeClass(Object(), objectInitializer, NULL);
-	initializeClass(Class(), classInitializer, Object());
-	initializeClass(String(), stringInitializer, Object());
-	initializeClass(Number(), numberInitializer, Object());
+	obj_initialize_class(Object(), obj_object_initializer, NULL);
+	obj_initialize_class(Class(), obj_class_initializer, Object());
+	obj_initialize_class(String(), obj_string_initializer, Object());
+	obj_initialize_class(Number(), obj_number_initializer, Object());
 
 	struct String* name = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", "Leandro");
 	

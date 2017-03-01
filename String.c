@@ -52,7 +52,7 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 	return self;
 }
 
-void stringInitializer(struct Class_String* klass)
+void obj_string_initializer(struct Class_String* klass)
 {
 	klass->super.objectName = "String";
 

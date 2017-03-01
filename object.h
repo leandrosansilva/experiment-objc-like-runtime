@@ -3,7 +3,6 @@
 #include "runtime.h"
 
 struct Object;
-struct Class_Object;
 
 struct Object
 {
@@ -19,10 +18,8 @@ struct Class_Object
 	struct ObjectSelectorPair* selectors;
 };
 
-void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super);
+void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super);
 
 struct Class_Object* Object();
 
-void objectInitializer(struct Class_Object* klass);
-
-void classInitializer(struct Class_Object* klass);
+void obj_object_initializer(struct Class_Object* klass);

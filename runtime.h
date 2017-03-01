@@ -18,7 +18,7 @@ enum obj_runtime_type
 
 typedef unsigned char obj_runtime_type;
 
-typedef void (*obj_class_initializer)(struct Class_Object*);
+typedef void (*obj_class_initializer_callback)(struct Class_Object*);
 
 void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector);
 
@@ -31,3 +31,5 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 void obj_unload_class(struct Class_Object* klass);
 
 struct Class_Object* Class();
+
+void obj_class_initializer(struct Class_Object* klass);

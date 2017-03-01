@@ -12,4 +12,4 @@ struct String
 
 struct Class_String* String();
 
-void stringInitializer(struct Class_String* klass);
+void obj_string_initializer(struct Class_String* klass);

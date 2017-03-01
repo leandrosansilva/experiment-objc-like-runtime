@@ -113,7 +113,7 @@ static struct Object* release_object_selector(struct Object* self, va_list argum
 	*object = NULL;
 }
 
-void classInitializer(struct Class_Object* klass)
+void obj_class_initializer(struct Class_Object* klass)
 {
 	klass->objectName = "Class";
 	obj_add_selector(klass, "alloc", alloc_selector);
@@ -125,7 +125,7 @@ static void classStaticInitializer(struct Class_Object* klass)
 	klass->objectName = NULL;
 }
 
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super, bool createStatic);
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super, bool createStatic);
 
 static struct Class_Object* createClassWithStaticMethods()
 {
@@ -134,7 +134,7 @@ static struct Class_Object* createClassWithStaticMethods()
 		return class_with_class_methods;
 }
 
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super, bool createStatic)
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super, bool createStatic)
 {
 	klass->proto.tag = obj_runtime_type_class;
 	klass->proto.klass = createStatic ? createClassWithStaticMethods() : Object();
@@ -146,7 +146,7 @@ static void privInitializeClass(struct Class_Object* klass, obj_class_initialize
 	}
 }
 
-void initializeClass(struct Class_Object* klass, obj_class_initializer initializer, struct Class_Object* super)
+void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super)
 {
 	privInitializeClass(klass, initializer, super, true);
 }

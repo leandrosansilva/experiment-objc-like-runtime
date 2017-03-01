@@ -16,7 +16,7 @@ static struct String* description_selector(struct Object* self, va_list argument
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
-void objectInitializer(struct Class_Object* klass)
+void obj_object_initializer(struct Class_Object* klass)
 {
 	klass->objectName = "Object";
 	obj_add_selector(klass, "description", description_selector);
