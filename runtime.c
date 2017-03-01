@@ -117,31 +117,10 @@ static struct Object* alloc_selector(struct Object* self, va_list arguments)
 	return obj;
 }
 
-static struct Object* release_object_selector(struct Object* self, va_list arguments)
-{
-	struct Object** object = va_arg(arguments, struct Object*);
-
-	if (object == NULL) {
-		return NULL;
-	}
-
-	if (*object == NULL) {
-		return NULL;
-	}
-
-	obj_send_message(*object, "dealloc");
-	free(*object);
-
-	*object = NULL;
-
-	return NULL;
-}
-
 void obj_class_initializer(struct Class_Object* klass)
 {
 	klass->objectName = "Class";
 	obj_add_selector(klass, "alloc", alloc_selector);
-	obj_add_selector(klass, "releaseObject", release_object_selector);
 }
 
 static void classStaticInitializer(struct Class_Object* klass)

@@ -26,12 +26,12 @@ int main(int argc, char** argv)
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");
 	
-	obj_send_message(Object(), "releaseObject", &format);
-	obj_send_message(Object(), "releaseObject", &name);
-	obj_send_message(Object(), "releaseObject", &length);
-	obj_send_message(Object(), "releaseObject", &formattedString);
-	obj_send_message(Object(), "releaseObject", &stringDescription);
-	obj_send_message(Object(), "releaseObject", &numberDescription);
+	obj_send_message(Object(), "release", &format);
+	obj_send_message(Object(), "release", &name);
+	obj_send_message(Object(), "release", &length);
+	obj_send_message(Object(), "release", &formattedString);
+	obj_send_message(Object(), "release", &stringDescription);
+	obj_send_message(Object(), "release", &numberDescription);
 
 	obj_unload_class(Class());
 	obj_unload_class(Object());

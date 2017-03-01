@@ -41,6 +41,12 @@ static struct Object* string_dealloc_selector(struct String* self, va_list argum
 	return NULL;
 }
 
+// the description of a string is the string itself!
+static struct String* description_selector(struct String* self, va_list arguments)
+{
+	return self;
+}
+
 static struct String* string_init_with_format_selector(struct String* self, va_list arguments)
 {
 	if (self = obj_send_message_to_super(self, "init")) {
