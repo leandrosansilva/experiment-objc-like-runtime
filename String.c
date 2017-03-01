@@ -36,6 +36,8 @@ static struct Number* string_dealloc_selector(struct String* string, va_list arg
 	if (string != NULL && string->content != NULL) {
 		free(string->content);
 	}
+
+	return NULL;
 }
 
 static struct String* string_init_with_format_selector(struct String* string, va_list arguments)

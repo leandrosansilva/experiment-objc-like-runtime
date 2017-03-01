@@ -3,11 +3,13 @@
 #include "runtime.h"
 
 struct Object;
+struct Object_Private;
 
 struct Object
 {
 	obj_runtime_type tag;
 	struct Class_Object* klass;
+	struct Object_Private* priv;
 };
 
 struct Class_Object
