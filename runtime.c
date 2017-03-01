@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 static struct Class_Object _Class;
 
@@ -22,6 +23,57 @@ struct ObjectSelectorPair
 	obj_selector selector;
 	struct ObjectSelectorPair* next;
 };
+
+struct Class_Object_List
+{
+	struct Class_Object* klass;
+	struct Clas_Object_List* next;
+};
+
+static struct Class_Object_List* list_of_registred_classes;
+
+void obj_init_runtime()
+{
+	list_of_registred_classes = NULL;
+}
+
+static print_diagram_for_class(struct Class_Object* klass)
+{
+	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->objectName);
+	for (struct ObjectSelectorPair* pair = klass->selectors; pair != NULL; pair = pair->next) {
+		printf("+ %s\\l", pair->selectorName);
+	}
+	printf("}\"\n  ]\n");
+
+	// The inheritance arrow
+	if (klass->super) {
+		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->super);
+	}
+
+	// The "type" class
+	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n", (unsigned long long)klass, (unsigned long long)klass->proto.klass);
+}
+
+void obj_print_class_diagram()
+{
+	printf("digraph G {\n");
+	printf(
+"  fontname = \"Bitstream Vera Sans\"\n"
+"  fontsize = 8\n"
+"  node [\n"
+"    fontname = \"Bitstream Vera Sans\"\n"
+"    fontsize = 8\n"
+"    shape = \"record\"\n"
+"  ]\n"
+"  edge [\n"
+"    fontname = \"Bitstream Vera Sans\"\n"
+"    fontsize = 8\n"
+"  ]\n");
+	for (struct Class_Object_List* l = list_of_registred_classes; l != NULL; l = l->next) {
+		print_diagram_for_class(l->klass);
+	}
+	printf("}\n");
+}
 
 void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector)
 {
@@ -147,6 +199,11 @@ static void privInitializeClass(struct Class_Object* klass, obj_class_initialize
 	if (initializer != NULL) {
 		initializer(klass);
 	}
+
+	struct Class_Object_List* l = malloc(sizeof(struct Class_Object_List));
+	l->next = list_of_registred_classes;
+	l->klass = klass;
+	list_of_registred_classes = l;
 }
 
 void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super)

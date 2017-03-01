@@ -35,3 +35,7 @@ void obj_unload_class(struct Class_Object* klass);
 struct Class_Object* Class();
 
 void obj_class_initializer(struct Class_Object* klass);
+
+void obj_init_runtime();
+
+void obj_print_class_diagram();
