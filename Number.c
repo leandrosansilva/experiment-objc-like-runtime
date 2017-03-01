@@ -23,7 +23,10 @@ static struct Object* object_size_selector(struct Object* self, va_list argument
 
 static struct Number* init_with_integer(struct Number* self, va_list arguments)
 {
-	self->value = va_arg(arguments, int);
+	if (self = obj_send_message_to_super(self, "init")) {
+		self->value = va_arg(arguments, int);
+	}
+
 	return self;
 }
 

@@ -53,6 +53,28 @@ obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selec
 	return NULL;
 }
 
+// FIXME: this function is a copy of obj_send_message. Refactor is needed!
+// The problem here is the va_args...
+struct Object* obj_send_message_to_super(struct Object* obj, const char* selectorName, ...)
+{
+	if (obj == NULL) {
+		return NULL;
+	}
+
+	obj_selector selector = obj_selector_for_name(obj->klass->super, selectorName);
+
+	if (selector == NULL) {
+		return NULL;
+	}
+
+	va_list arguments;
+	va_start(arguments, selectorName);
+	struct Object* result = selector(obj, arguments);
+	va_end(arguments);
+
+	return result;
+}
+
 struct Object* obj_send_message(struct Object* obj, const char* selectorName, ...)
 {
 	if (obj == NULL) {
@@ -111,6 +133,8 @@ static struct Object* release_object_selector(struct Object* self, va_list argum
 	free(*object);
 
 	*object = NULL;
+
+	return NULL;
 }
 
 void obj_class_initializer(struct Class_Object* klass)

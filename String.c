@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 struct Class_String
 {
@@ -25,32 +24,40 @@ static struct Object* object_size_selector(struct Object* self, va_list argument
 	return NULL;
 }
 
-static struct Number* string_length_selector(struct String* string, va_list arguments)
+static struct Number* string_length_selector(struct String* self, va_list arguments)
 {
-	int l = string->content != NULL ? strlen(string->content) : 0;
+	int l = self->content != NULL ? strlen(self->content) : 0;
 	return obj_send_message(obj_send_message(Number(), "alloc"), "initWithInt", l);
 }
 
-static struct Number* string_dealloc_selector(struct String* string, va_list arguments)
+static struct Object* string_dealloc_selector(struct String* self, va_list arguments)
 {
-	if (string != NULL && string->content != NULL) {
-		free(string->content);
+	obj_send_message_to_super(self, "dealloc");
+
+	if (self != NULL && self->content != NULL) {
+		free(self->content);
 	}
 
 	return NULL;
 }
 
-static struct String* string_init_with_format_selector(struct String* string, va_list arguments)
+static struct String* string_init_with_format_selector(struct String* self, va_list arguments)
 {
-	// TODO: implement!
-	return string;
+	if (self = obj_send_message_to_super(self, "init")) {
+		// TODO: implement!
+	}
+
+	return self;
 }
 
 static struct String* string_init_with_string_selector(struct String* self, va_list arguments)
 {
-	char* string = va_arg(arguments, char*);
-	self->content = malloc(strlen(string) + 1);
-	strcpy(self->content, string);
+	if (self = obj_send_message_to_super(self, "init")) {
+		char* string = va_arg(arguments, char*);
+		self->content = malloc(strlen(string) + 1);
+		strcpy(self->content, string);
+	}
+
 	return self;
 }
 

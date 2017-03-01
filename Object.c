@@ -2,7 +2,6 @@
 #include "runtime.h"
 #include "String.h"
 #include "Number.h"
-#include <stdio.h>
 
 static struct Class_Object _Object;
 
@@ -22,16 +21,14 @@ static struct String* description_selector(struct Object* self, va_list argument
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
-static struct String* init_selector(struct Object* self, va_list arguments)
+static struct Object* init_selector(struct Object* self, va_list arguments)
 {
-	printf("Calling Object::init\n");
 	self->priv = malloc(sizeof(struct Object_Private));
-	return NULL;
+	return self;
 }
 
 static struct String* dealloc_selector(struct Object* self, va_list arguments)
 {
-	printf("Calling Object::dealloc\n");
 	if (self) {
 		free(self->priv);
 	}

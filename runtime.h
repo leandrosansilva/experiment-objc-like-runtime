@@ -28,6 +28,8 @@ obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selec
 
 struct Object* obj_send_message(struct Object* obj, const char* selectorName, ...);
 
+struct Object* obj_send_message_to_super(struct Object* obj, const char* selectorName, ...);
+
 void obj_unload_class(struct Class_Object* klass);
 
 struct Class_Object* Class();
