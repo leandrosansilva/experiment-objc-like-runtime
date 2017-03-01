@@ -1,3 +1,4 @@
+#include "runtime.h"
 #include "object.h"
 #include "String.h"
 #include "Number.h"
@@ -32,10 +33,10 @@ int main(int argc, char** argv)
 	obj_send_message(Object(), "releaseObject", &stringDescription);
 	obj_send_message(Object(), "releaseObject", &numberDescription);
 
-	unloadClass(Class());
-	unloadClass(Object());
-	unloadClass(String());
-	unloadClass(Number());
+	obj_unload_class(Class());
+	obj_unload_class(Object());
+	obj_unload_class(String());
+	obj_unload_class(Number());
 
 	return 0;
 }

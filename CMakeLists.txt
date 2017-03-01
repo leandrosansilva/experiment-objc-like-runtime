@@ -7,6 +7,7 @@ add_definitions(-Wall -Wextra -std=c99)
 add_library(
 	object_like
 	SHARED
+	runtime.c
 	object.c
 	String.c
 	Number.c
