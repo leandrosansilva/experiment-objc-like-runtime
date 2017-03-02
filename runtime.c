@@ -51,6 +51,15 @@ void obj_shutdown_runtime()
 	obj_unload_class(Object());
 	obj_unload_class(String());
 	obj_unload_class(Number());
+
+	// unregister all classes...
+	struct Class_Object_List* tmp;
+
+	while(list_of_registred_classes != NULL) {
+		tmp = list_of_registred_classes;
+		list_of_registred_classes = list_of_registred_classes->next;
+		free(tmp);
+	}
 }
 
 static void print_diagram_for_class(struct Class_Object* klass)

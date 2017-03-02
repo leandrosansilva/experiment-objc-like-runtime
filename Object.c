@@ -48,9 +48,7 @@ static struct Object* release_object_selector(struct Object* self, va_list argum
 		return NULL;
 	}
 
-	if (*object == NULL) {
-		return NULL;
-	}
+	assert(*object != NULL);
 
 	assert((*object)->priv->ref_counter > 0);
 

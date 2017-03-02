@@ -14,7 +14,7 @@ add_definitions(
 
 add_library(
 	object_like
-	SHARED
+	STATIC
 	runtime.c
 	Object.c
 	String.c

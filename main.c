@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	obj_print_class_diagram();
+	//obj_print_class_diagram();
 
 	struct String* name = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", "Leandro");
 	
