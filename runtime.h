@@ -38,7 +38,10 @@ void obj_class_initializer(struct Class_Object* klass);
 
 void obj_init_runtime();
 
+void obj_shutdown_runtime();
+
 void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer);
 
-
 void obj_print_class_diagram();
+
+#define RETAIN(OBJ) obj_send_message(OBJ, "retain")

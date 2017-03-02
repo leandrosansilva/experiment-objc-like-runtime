@@ -4,9 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+#include "String.h"
+#include "Object.h"
+#include "Number.h"
 
 static struct Class_Object _Class;
 
@@ -35,6 +38,19 @@ static struct Class_Object_List* list_of_registred_classes;
 void obj_init_runtime()
 {
 	list_of_registred_classes = NULL;
+
+	obj_initialize_class(Class(), obj_class_initializer);
+	obj_initialize_class(Object(), obj_object_initializer);
+	obj_initialize_class(String(), obj_string_initializer);
+	obj_initialize_class(Number(), obj_number_initializer);
+}
+
+void obj_shutdown_runtime()
+{
+	obj_unload_class(Class());
+	obj_unload_class(Object());
+	obj_unload_class(String());
+	obj_unload_class(Number());
 }
 
 static print_diagram_for_class(struct Class_Object* klass)
@@ -134,6 +150,7 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 
 	obj_selector selector = obj_selector_for_name(obj->klass, selectorName);
 
+	// TODO: maybe retorn SelectorNotFound()?
 	if (selector == NULL) {
 		return NULL;
 	}
@@ -146,33 +163,10 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 	return result;
 }
 
-static struct Object* alloc_selector(struct Object* self, va_list arguments)
-{
-	size_t size = 0;
-
-	obj_send_message(self, "objectSize", &size);
-
-	if (size == 0) {
-		return NULL;
-	}
-
-	assert(size >= sizeof(struct Object) && "Object is too small!");
-
-	struct Object* obj = malloc(size);
-	memset(obj, 0, size);
-
-	obj->tag = obj_runtime_type_object;
-
-	obj->klass = (struct Class_Object*)self;
-
-	return obj;
-}
-
 void obj_class_initializer(struct Class_Object* klass)
 {
 	klass->objectName = "Class";
 	klass->parent = NULL;
-	obj_add_selector(klass, "alloc", alloc_selector);
 }
 
 static void classStaticInitializer(struct Class_Object* klass)
@@ -234,6 +228,9 @@ static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelecto
 void obj_unload_class(struct Class_Object* klass)
 {
 	deleteClassSelector(klass->proto.klass, klass->proto.klass->selectors);
-	free(klass->proto.klass);
+
+	if (klass->proto.klass != Object() && klass->proto.klass != Class()) {
+				free(klass->proto.klass);
+	}
 	deleteClassSelector(klass, klass->selectors);
 }

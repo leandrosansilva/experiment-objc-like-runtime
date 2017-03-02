@@ -44,7 +44,7 @@ static struct Object* string_dealloc_selector(struct String* self, va_list argum
 // the description of a string is the string itself!
 static struct String* description_selector(struct String* self, va_list arguments)
 {
-	return self;
+	return RETAIN(self);
 }
 
 static struct String* string_init_with_format_selector(struct String* self, va_list arguments)
