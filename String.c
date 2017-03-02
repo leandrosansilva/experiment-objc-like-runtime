@@ -69,12 +69,13 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 
 void obj_string_initializer(struct Class_String* klass)
 {
-	klass->super.parent = Object();
-	klass->super.objectName = "String";
+	obj_set_class_parent(klass, Object());
+	obj_set_class_name(klass, "String");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
 
 	obj_add_selector(klass, "length", string_length_selector);
+	obj_add_selector(klass, "description", description_selector);
 	obj_add_selector(klass, "dealloc", string_dealloc_selector);
 	obj_add_selector(klass, "initWithFormat", string_init_with_format_selector);
 	obj_add_selector(klass, "initWithString", string_init_with_string_selector);

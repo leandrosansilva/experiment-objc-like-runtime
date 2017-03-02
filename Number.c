@@ -32,8 +32,8 @@ static struct Number* init_with_integer(struct Number* self, va_list arguments)
 
 void obj_number_initializer(struct Class_Number* klass)
 {
-	klass->super.parent = Object();
-	klass->super.objectName = "Number";
+	obj_set_class_parent(klass, Object());
+	obj_set_class_name(klass, "Number");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
 

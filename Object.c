@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
 static struct Class_Object _Object;
 
@@ -26,15 +28,11 @@ static struct String* description_selector(struct Object* self, va_list argument
 
 static struct Object* init_selector(struct Object* self, va_list arguments)
 {
-	self->priv = malloc(sizeof(struct Object_Private));
-	self->priv->ref_counter = 1;
 	return self;
 }
 
 static struct Object* retain_selector(struct Object* self, va_list arguments)
 {
-	printf("Retain Called!\n");
-
 	if (self != NULL) {
 		self->priv->ref_counter++;
 	}
@@ -54,21 +52,20 @@ static struct Object* release_object_selector(struct Object* self, va_list argum
 		return NULL;
 	}
 
-	printf("Releasing object with %d counter!\n", (*object)->priv->ref_counter);
-	obj_send_message(*object, "dealloc");
+	assert((*object)->priv->ref_counter > 0);
 
-	if (--((*object)->priv->ref_counter) == 0) {
+	((*object)->priv->ref_counter)--;
+
+	if (((*object)->priv->ref_counter) == 0) {
 		obj_send_message(*object, "dealloc");
 		free(*object);
 		*object = NULL;
-	} else {
-		printf("Object still has references, keeping it alive!\n");
-	}
+	} 
 
 	return NULL;
 }
 
-static struct Object* alloc_selector(struct Object_Class* self, va_list arguments)
+static struct Object* alloc_selector(struct Class_Object* self, va_list arguments)
 {
 	size_t size = 0;
 
@@ -84,8 +81,10 @@ static struct Object* alloc_selector(struct Object_Class* self, va_list argument
 	memset(obj, 0, size);
 
 	obj->tag = obj_runtime_type_object;
-
 	obj->klass = (struct Class_Object*)self;
+
+	obj->priv = malloc(sizeof(struct Object_Private));
+	obj->priv->ref_counter = 1;
 
 	return obj;
 }
@@ -100,8 +99,8 @@ static struct Object* dealloc_selector(struct Object* self, va_list arguments)
 
 void obj_object_initializer(struct Class_Object* klass)
 {
-	klass->objectName = "Object";
-	klass->parent = NULL;
+	obj_set_class_name(klass, "Object");
+	obj_set_class_parent(klass, NULL);
 
 	obj_add_class_selector(klass, "release", release_object_selector);
 	obj_add_class_selector(klass, "alloc", alloc_selector);

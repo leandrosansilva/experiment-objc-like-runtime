@@ -44,4 +44,9 @@ void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_call
 
 void obj_print_class_diagram();
 
+void obj_set_class_parent(struct Class_Object* klass, struct Class_Object* parent);
+
+void obj_set_class_name(struct Class_Object* klass, const char* name);
+
 #define RETAIN(OBJ) obj_send_message(OBJ, "retain")
+#define RELEASE(OBJ) obj_send_message(Object(), "release", &OBJ)

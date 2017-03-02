@@ -2,7 +2,15 @@ project(objc-like)
 
 cmake_minimum_required(VERSION 2.8)
 
-add_definitions(-Wall -Wextra -std=c99)
+add_definitions(
+	-Wall
+	-Wextra
+	-Wno-parentheses
+	-Wno-unused-parameter
+	-Wno-incompatible-pointer-types
+	-Werror=return-type
+	-std=c99
+)
 
 add_library(
 	object_like

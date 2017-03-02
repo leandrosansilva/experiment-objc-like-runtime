@@ -53,7 +53,7 @@ void obj_shutdown_runtime()
 	obj_unload_class(Number());
 }
 
-static print_diagram_for_class(struct Class_Object* klass)
+static void print_diagram_for_class(struct Class_Object* klass)
 {
 	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->objectName);
 	for (struct ObjectSelectorPair* pair = klass->selectors; pair != NULL; pair = pair->next) {
@@ -165,8 +165,8 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 
 void obj_class_initializer(struct Class_Object* klass)
 {
-	klass->objectName = "Class";
-	klass->parent = NULL;
+	obj_set_class_name(klass, "Class");
+	obj_set_class_parent(klass, NULL);
 }
 
 static void classStaticInitializer(struct Class_Object* klass)
@@ -177,7 +177,7 @@ static void classStaticInitializer(struct Class_Object* klass)
 
 static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic);
 
-static struct Class_Object* createClassWithStaticMethods(struct Object_Class* klass, bool shouldCreate)
+static struct Class_Object* createClassWithStaticMethods(struct Class_Object* klass, bool shouldCreate)
 {
 	if (klass == Object()) {
 		return Class();
@@ -233,4 +233,14 @@ void obj_unload_class(struct Class_Object* klass)
 				free(klass->proto.klass);
 	}
 	deleteClassSelector(klass, klass->selectors);
+}
+
+void obj_set_class_parent(struct Class_Object* klass, struct Class_Object* parent)
+{
+	klass->parent = parent;
+}
+
+void obj_set_class_name(struct Class_Object* klass, const char* name)
+{
+	klass->objectName = name;
 }
