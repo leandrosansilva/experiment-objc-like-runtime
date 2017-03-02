@@ -10,10 +10,10 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	obj_initialize_class(Object(), obj_object_initializer, NULL);
-	obj_initialize_class(Class(), obj_class_initializer, Object());
-	obj_initialize_class(String(), obj_string_initializer, Object());
-	obj_initialize_class(Number(), obj_number_initializer, Object());
+	obj_initialize_class(Object(), obj_object_initializer);
+	obj_initialize_class(Class(), obj_class_initializer);
+	obj_initialize_class(String(), obj_string_initializer);
+	obj_initialize_class(Number(), obj_number_initializer);
 
 	obj_print_class_diagram();
 

@@ -15,12 +15,10 @@ struct Object
 struct Class_Object
 {
 	struct Object proto;
-	struct Class_Object* super;
+	struct Class_Object* parent;
 	const char* objectName;
 	struct ObjectSelectorPair* selectors;
 };
-
-void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super);
 
 struct Class_Object* Object();
 

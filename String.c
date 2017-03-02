@@ -69,6 +69,7 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 
 void obj_string_initializer(struct Class_String* klass)
 {
+	klass->super.parent = Object();
 	klass->super.objectName = "String";
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

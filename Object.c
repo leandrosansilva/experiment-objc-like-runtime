@@ -70,6 +70,7 @@ static struct String* dealloc_selector(struct Object* self, va_list arguments)
 void obj_object_initializer(struct Class_Object* klass)
 {
 	klass->objectName = "Object";
+	klass->parent = NULL;
 
 	obj_add_class_selector(klass, "release", release_object_selector);
 

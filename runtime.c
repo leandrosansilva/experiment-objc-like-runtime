@@ -46,9 +46,7 @@ static print_diagram_for_class(struct Class_Object* klass)
 	printf("}\"\n  ]\n");
 
 	// The inheritance arrow
-	if (klass->super) {
-		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->super);
-	}
+	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->parent);
 
 	// The "type" class
 	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n", (unsigned long long)klass, (unsigned long long)klass->proto.klass);
@@ -57,6 +55,7 @@ static print_diagram_for_class(struct Class_Object* klass)
 void obj_print_class_diagram()
 {
 	printf("digraph G {\n");
+	printf("  class_addr_%lld [\n    label = \"GOD\"\n  ]\n", NULL);
 	printf(
 "  fontname = \"Bitstream Vera Sans\"\n"
 "  fontsize = 8\n"
@@ -94,7 +93,7 @@ void obj_add_class_selector(struct Class_Object* klass, const char* selectorName
 obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName)
 {
 	// NOTE: this is the worst implementation of method lookup ever!
-	for (struct Class_Object* k = klass; k != NULL; k = k->super) {
+	for (struct Class_Object* k = klass; k != NULL; k = k->parent) {
 		for (struct ObjectSelectorPair* pair = k->selectors; pair != NULL; pair = pair->next) {
 			if (strcmp(pair->selectorName, selectorName) == 0) {
 				return pair->selector;
@@ -113,7 +112,7 @@ struct Object* obj_send_message_to_super(struct Object* obj, const char* selecto
 		return NULL;
 	}
 
-	obj_selector selector = obj_selector_for_name(obj->klass->super, selectorName);
+	obj_selector selector = obj_selector_for_name(obj->klass->parent, selectorName);
 
 	if (selector == NULL) {
 		return NULL;
@@ -172,28 +171,37 @@ static struct Object* alloc_selector(struct Object* self, va_list arguments)
 void obj_class_initializer(struct Class_Object* klass)
 {
 	klass->objectName = "Class";
+	klass->parent = NULL;
 	obj_add_selector(klass, "alloc", alloc_selector);
 }
 
 static void classStaticInitializer(struct Class_Object* klass)
 {
+	klass->parent = Class();
 	klass->objectName = NULL;
 }
 
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super, bool createStatic);
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic);
 
-static struct Class_Object* createClassWithStaticMethods()
+static struct Class_Object* createClassWithStaticMethods(struct Object_Class* klass, bool shouldCreate)
 {
-		struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
-		privInitializeClass(class_with_class_methods, classStaticInitializer, &_Class, false);
-		return class_with_class_methods;
+	if (klass == Object()) {
+		return Class();
+	}
+
+	if (!shouldCreate) {
+		return Object();
+	}
+
+	struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
+	privInitializeClass(class_with_class_methods, classStaticInitializer, false);
+	return class_with_class_methods;
 }
 
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super, bool createStatic)
+static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic)
 {
 	klass->proto.tag = obj_runtime_type_class;
-	klass->proto.klass = createStatic ? createClassWithStaticMethods() : Object();
-	klass->super = super;
+	klass->proto.klass = createClassWithStaticMethods(klass, createStatic);
 	klass->selectors = NULL;
 
 	if (initializer != NULL) {
@@ -206,9 +214,10 @@ static void privInitializeClass(struct Class_Object* klass, obj_class_initialize
 	list_of_registred_classes = l;
 }
 
-void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer, struct Class_Object* super)
+void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer)
 {
-	privInitializeClass(klass, initializer, super, true);
+	bool createStatic = klass != Object() && klass != Class();
+	privInitializeClass(klass, initializer, createStatic);
 }
 
 static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)
