@@ -1,6 +1,7 @@
 #include "Number.h"
 
 #include "Class.h"
+#include "Box.h"
 #include "runtime.h"
 
 #include <stdlib.h>
@@ -41,6 +42,11 @@ static struct Number* init_with_integer(struct Number* self, va_list arguments)
 	return self;
 }
 
+static struct Box* get_boxed_value(struct Number* self, va_list arguments)
+{
+	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", &self->value);
+}
+
 void obj_number_initializer(struct Class_Number* klass)
 {
 	obj_set_class_parent(klass, Object());
@@ -49,4 +55,5 @@ void obj_number_initializer(struct Class_Number* klass)
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
 
 	obj_add_selector(klass, "initWithInt", init_with_integer);
+	obj_add_selector(klass, "boxedValue", get_boxed_value);
 }

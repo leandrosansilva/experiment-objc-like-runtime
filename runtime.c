@@ -11,6 +11,7 @@
 #include "String.h"
 #include "Number.h"
 #include "Object.h"
+#include "Box.h"
 #include "Object_Private.h"
 
 struct Class_Object_Private
@@ -55,6 +56,7 @@ void obj_init_runtime()
 	obj_initialize_class(Object(), obj_object_initializer);
 	obj_initialize_class(String(), obj_string_initializer);
 	obj_initialize_class(Number(), obj_number_initializer);
+	obj_initialize_class(Box(), obj_box_initializer);
 }
 
 void obj_shutdown_runtime()
@@ -288,4 +290,9 @@ void obj_set_class_name(struct Class_Object* klass, const char* name)
 const char* obj_class_name(struct Class_Object* klass)
 {
 	return klass == NULL ? NULL : klass->priv->name;
+}
+
+struct Class_Object* obj_class_for_object(struct Object* object)
+{
+	return object == NULL ? NULL : object->klass;
 }

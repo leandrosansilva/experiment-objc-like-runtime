@@ -40,5 +40,7 @@ void obj_set_class_name(struct Class_Object* klass, const char* name);
 
 const char* obj_class_name(struct Class_Object* klass);
 
+struct Class_Object* obj_class_for_object(struct Object* object);
+
 #define RETAIN(OBJ) obj_send_message(OBJ, "retain")
 #define RELEASE(OBJ) obj_send_message(Object(), "release", &OBJ)

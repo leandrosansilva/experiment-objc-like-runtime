@@ -19,6 +19,7 @@ add_library(
 	Object.c
 	String.c
 	Number.c
+	Box.c
 	)
 
 add_executable(main main.c)

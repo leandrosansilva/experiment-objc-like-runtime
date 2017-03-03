@@ -2,6 +2,7 @@
 
 #include "Class.h"
 #include "Number.h"
+#include "Box.h"
 #include "runtime.h"
 
 #include <stdlib.h>
@@ -76,6 +77,11 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 	return self;
 }
 
+static struct Box* get_boxed_value(struct String* self, va_list arguments)
+{
+	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", self->content);
+}
+
 void obj_string_initializer(struct Class_String* klass)
 {
 	obj_set_class_parent(klass, Object());
@@ -88,4 +94,5 @@ void obj_string_initializer(struct Class_String* klass)
 	obj_add_selector(klass, "dealloc", string_dealloc_selector);
 	obj_add_selector(klass, "initWithFormat", string_init_with_format_selector);
 	obj_add_selector(klass, "initWithString", string_init_with_string_selector);
+	obj_add_selector(klass, "boxedValue", get_boxed_value);
 }
