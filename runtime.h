@@ -6,10 +6,6 @@
 struct Object;
 struct Class_Object;
 
-typedef struct Object* (*obj_selector)(struct Object*, va_list);
-
-struct ObjectSelectorPair;
-
 enum obj_runtime_type
 {
 	obj_runtime_type_class = 0x01,
@@ -17,6 +13,8 @@ enum obj_runtime_type
 };
 
 typedef unsigned char obj_runtime_type;
+
+typedef struct Object* (*obj_selector)(struct Object*, va_list);
 
 typedef void (*obj_class_initializer_callback)(struct Class_Object*);
 
@@ -47,6 +45,8 @@ void obj_print_class_diagram();
 void obj_set_class_parent(struct Class_Object* klass, struct Class_Object* parent);
 
 void obj_set_class_name(struct Class_Object* klass, const char* name);
+
+const char* obj_class_name(struct Class_Object* klass);
 
 #define RETAIN(OBJ) obj_send_message(OBJ, "retain")
 #define RELEASE(OBJ) obj_send_message(Object(), "release", &OBJ)

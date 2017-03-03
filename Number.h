@@ -1,15 +1,8 @@
 #pragma once
 
-#include "Object.h"
-#include <stdint.h>
-
 struct Class_Number;
 
-struct Number
-{
-	struct Object super;
-	int value;
-};
+struct Number;
 
 void obj_number_initializer(struct Class_Number* klass);
 

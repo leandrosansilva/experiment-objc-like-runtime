@@ -1,7 +1,10 @@
 #include "Object.h"
+#include "Class.h"
 #include "runtime.h"
 #include "String.h"
 #include "Number.h"
+
+#include "Object_Private.h"
 
 #include <stdint.h>
 #include <assert.h>
@@ -10,11 +13,6 @@
 
 static struct Class_Object _Object;
 
-struct Object_Private
-{
-	uint16_t ref_counter;
-};
-
 struct Class_Object* Object()
 {
 	return &_Object;
@@ -22,7 +20,10 @@ struct Class_Object* Object()
 
 static struct String* description_selector(struct Object* self, va_list arguments)
 {
-	struct String* nameAsDescription = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", self->klass->objectName);
+	struct String* nameAsDescription = obj_send_message(
+			obj_send_message(String(), "alloc"), 
+			"initWithString", obj_class_name(self->klass));
+
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
@@ -78,10 +79,10 @@ static struct Object* alloc_selector(struct Class_Object* self, va_list argument
 	struct Object* obj = malloc(size);
 	memset(obj, 0, size);
 
-	obj->tag = obj_runtime_type_object;
 	obj->klass = (struct Class_Object*)self;
 
 	obj->priv = malloc(sizeof(struct Object_Private));
+	obj->priv->tag = obj_runtime_type_object;
 	obj->priv->ref_counter = 1;
 
 	return obj;

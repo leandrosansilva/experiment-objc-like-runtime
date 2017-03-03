@@ -12,13 +12,13 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	//obj_print_class_diagram();
+	obj_print_class_diagram();
 
 	struct String* name = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", "Leandro");
 	
 	struct Number* length = obj_send_message(name, "length");
 
-	printf("String Length == %d\n", length->value);
+	//printf("String Length == %d\n", length->value);
 
 	struct String* format = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", "Name: %@, length: %@");
 

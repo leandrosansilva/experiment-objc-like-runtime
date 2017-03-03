@@ -4,11 +4,7 @@
 
 struct Class_String;
 
-struct String
-{
-	struct Object super;
-	char* content;
-};
+struct String;
 
 struct Class_String* String();
 

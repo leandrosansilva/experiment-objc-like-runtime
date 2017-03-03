@@ -1,5 +1,8 @@
 #include "String.h"
+
+#include "Class.h"
 #include "Number.h"
+#include "runtime.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +10,12 @@
 struct Class_String
 {
 	struct Class_Object super;
+};
+
+struct String
+{
+	struct Object super;
+	char* content;
 };
 
 static struct Class_String _String;

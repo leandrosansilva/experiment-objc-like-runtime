@@ -1,5 +1,4 @@
 #include "runtime.h"
-#include "Object.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -7,9 +6,21 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "String.h"
+#include "Class.h"
 #include "Object.h"
+#include "String.h"
 #include "Number.h"
+#include "Object.h"
+#include "Object_Private.h"
+
+struct Class_Object_Private
+{
+	struct Class_Object* parent;
+	const char* name;
+	struct ObjectSelectorPair* selectors;
+};
+
+struct ObjectSelectorPair;
 
 static struct Class_Object _Class;
 
@@ -19,7 +30,8 @@ struct Class_Object* Class()
 }
 
 // NOTE: linked list. No need to say how inefficient it is :-)
-// It should be replaced by an array based hash map, but who cares?
+// It should be replaced by an array based (to minimize cache misses) hash map,
+// but who cares?
 struct ObjectSelectorPair
 {
 	const char* selectorName;
@@ -30,7 +42,7 @@ struct ObjectSelectorPair
 struct Class_Object_List
 {
 	struct Class_Object* klass;
-	struct Clas_Object_List* next;
+	struct Class_Object_List* next;
 };
 
 static struct Class_Object_List* list_of_registred_classes;
@@ -64,14 +76,14 @@ void obj_shutdown_runtime()
 
 static void print_diagram_for_class(struct Class_Object* klass)
 {
-	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->objectName);
-	for (struct ObjectSelectorPair* pair = klass->selectors; pair != NULL; pair = pair->next) {
+	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
+	for (struct ObjectSelectorPair* pair = klass->priv->selectors; pair != NULL; pair = pair->next) {
 		printf("+ %s\\l", pair->selectorName);
 	}
 	printf("}\"\n  ]\n");
 
 	// The inheritance arrow
-	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->parent);
+	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->priv->parent);
 
 	// The "type" class
 	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n", (unsigned long long)klass, (unsigned long long)klass->proto.klass);
@@ -106,8 +118,8 @@ void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_
 	pair->selector = selector;
 
 	// insert at the beginning of the list
-	pair->next = klass->selectors;
-	klass->selectors = pair;
+	pair->next = klass->priv->selectors;
+	klass->priv->selectors = pair;
 }
 
 void obj_add_class_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector)
@@ -118,8 +130,8 @@ void obj_add_class_selector(struct Class_Object* klass, const char* selectorName
 obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName)
 {
 	// NOTE: this is the worst implementation of method lookup ever!
-	for (struct Class_Object* k = klass; k != NULL; k = k->parent) {
-		for (struct ObjectSelectorPair* pair = k->selectors; pair != NULL; pair = pair->next) {
+	for (struct Class_Object* k = klass; k != NULL; k = k->priv->parent) {
+		for (struct ObjectSelectorPair* pair = k->priv->selectors; pair != NULL; pair = pair->next) {
 			if (strcmp(pair->selectorName, selectorName) == 0) {
 				return pair->selector;
 			}
@@ -137,7 +149,7 @@ struct Object* obj_send_message_to_super(struct Object* obj, const char* selecto
 		return NULL;
 	}
 
-	obj_selector selector = obj_selector_for_name(obj->klass->parent, selectorName);
+	obj_selector selector = obj_selector_for_name(obj->klass->priv->parent, selectorName);
 
 	if (selector == NULL) {
 		return NULL;
@@ -180,8 +192,8 @@ void obj_class_initializer(struct Class_Object* klass)
 
 static void classStaticInitializer(struct Class_Object* klass)
 {
-	klass->parent = Class();
-	klass->objectName = NULL;
+	obj_set_class_parent(klass, Class());
+	obj_set_class_name(klass, NULL);
 }
 
 static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic);
@@ -198,14 +210,21 @@ static struct Class_Object* createClassWithStaticMethods(struct Class_Object* kl
 
 	struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
 	privInitializeClass(class_with_class_methods, classStaticInitializer, false);
+
 	return class_with_class_methods;
 }
 
 static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic)
 {
-	klass->proto.tag = obj_runtime_type_class;
+	klass->priv = malloc(sizeof(struct Class_Object_Private));
+	memset(klass->priv, 0, sizeof(struct Class_Object_Private));
+
+	klass->proto.priv = malloc(sizeof(struct Object_Private));
+	memset(klass->proto.priv, 0, sizeof(struct Object_Private));
+
+	klass->proto.priv->tag = obj_runtime_type_class;
 	klass->proto.klass = createClassWithStaticMethods(klass, createStatic);
-	klass->selectors = NULL;
+	klass->priv->selectors = NULL;
 
 	if (initializer != NULL) {
 		initializer(klass);
@@ -234,22 +253,39 @@ static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelecto
 	}
 }
 
-void obj_unload_class(struct Class_Object* klass)
+static void privUnloadClass(struct Class_Object* klass, bool unloadStatic)
 {
-	deleteClassSelector(klass->proto.klass, klass->proto.klass->selectors);
+	if (unloadStatic)
+	{
+		privUnloadClass(klass->proto.klass, false);
+	}
 
 	if (klass->proto.klass != Object() && klass->proto.klass != Class()) {
-				free(klass->proto.klass);
+		free(klass->proto.klass);
 	}
-	deleteClassSelector(klass, klass->selectors);
+
+	deleteClassSelector(klass, klass->priv->selectors);
+
+	free(klass->proto.priv);
+	free(klass->priv);
+}
+
+void obj_unload_class(struct Class_Object* klass)
+{
+	privUnloadClass(klass, true);
 }
 
 void obj_set_class_parent(struct Class_Object* klass, struct Class_Object* parent)
 {
-	klass->parent = parent;
+	klass->priv->parent = parent;
 }
 
 void obj_set_class_name(struct Class_Object* klass, const char* name)
 {
-	klass->objectName = name;
+	klass->priv->name = name;
+}
+
+const char* obj_class_name(struct Class_Object* klass)
+{
+	return klass == NULL ? NULL : klass->priv->name;
 }
