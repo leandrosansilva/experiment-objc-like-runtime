@@ -6,14 +6,6 @@
 struct Object;
 struct Class_Object;
 
-enum obj_runtime_type
-{
-	obj_runtime_type_class = 0x01,
-	obj_runtime_type_object = 0x02
-};
-
-typedef unsigned char obj_runtime_type;
-
 typedef struct Object* (*obj_selector)(struct Object*, va_list);
 
 typedef void (*obj_class_initializer_callback)(struct Class_Object*);
