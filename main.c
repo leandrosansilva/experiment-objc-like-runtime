@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 
 	struct Box* nameValue = obj_send_message(name, "boxedValue");
 
-	//printf("String Length == %d\n", length->value);
+	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 
 	struct String* format = obj_send_message(obj_send_message(String(), "alloc"), "initWithString", "Name: %@, length: %@");
 
