@@ -5,7 +5,7 @@ TL;DR -> experiments with message passing based object oriented "DSL" in C.
 
 This is not really a "project", but some experiments I started in a sunny weekend [1] when I had another anxiety crisis and could not leave home (but you really did not need to know that). So why not, instead of just watch series on Netflix, do some useless programming?
 
-I hate when people say "I am a <programming language X> programmer". I think this is rather too limiting. Good programmers are just programmers; the programming language is just a tool.
+I hate when people say "I am a $programming_language_X programmer". I think this is rather too limiting. Good programmers are just programmers; the programming language is just a tool.
 
 But as I am not a good programmer, I would consider myself a C++ programmer, as it's my "mother tongue" that I have used professionally for most of my career.
 
