@@ -20,10 +20,7 @@ struct Class_Object* Object()
 
 static struct String* description_selector(struct Object* self, va_list arguments)
 {
-	struct String* nameAsDescription = obj_send_message(
-			obj_send_message(String(), "alloc"), 
-			"initWithString", obj_class_name(self->klass));
-
+	struct String* nameAsDescription = STRING(obj_class_name(obj_class_for_object(self)));
 	return nameAsDescription; // TODO: format like: "Object <address>"
 }
 
@@ -34,22 +31,23 @@ static struct Object* init_selector(struct Object* self, va_list arguments)
 
 static struct Object* retain_selector(struct Object* self, va_list arguments)
 {
-	if (self != NULL) {
+	if (!obj_object_is_class(self)) {
 		self->priv->ref_counter++;
 	}
 
 	return self;
 }
 
-static struct Object* release_object_selector(struct Object* self, va_list arguments)
+static struct Object* release_object_selector(struct Class_Object* self, va_list arguments)
 {
 	struct Object** object = va_arg(arguments, struct Object*);
 
-	if (object == NULL) {
+	assert(object != NULL);
+	assert(*object != NULL);
+
+	if (obj_object_is_class(*object)) {
 		return NULL;
 	}
-
-	assert(*object != NULL);
 
 	assert((*object)->priv->ref_counter > 0);
 
@@ -58,8 +56,9 @@ static struct Object* release_object_selector(struct Object* self, va_list argum
 	if (((*object)->priv->ref_counter) == 0) {
 		obj_send_message(*object, "dealloc");
 		free(*object);
-		*object = NULL;
 	} 
+
+	*object = NULL;
 
 	return NULL;
 }
@@ -90,9 +89,8 @@ static struct Object* alloc_selector(struct Class_Object* self, va_list argument
 
 static struct Object* dealloc_selector(struct Object* self, va_list arguments)
 {
-	if (self) {
-		free(self->priv);
-	}
+	printf("Calling dealloc for %s\n", obj_class_name(obj_class_for_object(self)));
+	free(self->priv);
 	return NULL;
 }
 

@@ -42,11 +42,11 @@ static struct Number* string_length_selector(struct String* self, va_list argume
 
 static struct Object* string_dealloc_selector(struct String* self, va_list arguments)
 {
-	obj_send_message_to_super(self, "dealloc");
-
-	if (self != NULL && self->content != NULL) {
+	if (self->content != NULL) {
 		free(self->content);
 	}
+
+	obj_send_message_to_super(self, "dealloc");
 
 	return NULL;
 }
@@ -77,9 +77,14 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 	return self;
 }
 
+static struct String* string_from_string_selector(struct Class_String* self, va_list arguments)
+{
+	return obj_send_message_with_arguments(obj_send_message(self, "alloc"), "initWithString", arguments);
+}
+
 static struct Box* get_boxed_value(struct String* self, va_list arguments)
 {
-	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", self->content);
+	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", self, self->content);
 }
 
 void obj_string_initializer(struct Class_String* klass)
@@ -88,6 +93,7 @@ void obj_string_initializer(struct Class_String* klass)
 	obj_set_class_name(klass, "String");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
+	obj_add_class_selector(klass, "stringWithString", string_from_string_selector);
 
 	obj_add_selector(klass, "length", string_length_selector);
 	obj_add_selector(klass, "description", description_selector);

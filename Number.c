@@ -44,7 +44,7 @@ static struct Number* init_with_integer(struct Number* self, va_list arguments)
 
 static struct Box* get_boxed_value(struct Number* self, va_list arguments)
 {
-	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", &self->value);
+	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", self, &self->value);
 }
 
 void obj_number_initializer(struct Class_Number* klass)

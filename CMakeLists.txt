@@ -20,6 +20,7 @@ add_library(
 	String.c
 	Number.c
 	Box.c
+	Array.c
 	)
 
 add_executable(main main.c)

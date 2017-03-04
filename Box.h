@@ -7,6 +7,7 @@ struct Class_Box;
 struct Box
 {
 	struct Object super;
+	struct Object* caller;
 	void* value;
 };
 

@@ -9,3 +9,5 @@ struct String;
 struct Class_String* String();
 
 void obj_string_initializer(struct Class_String* klass);
+
+#define STRING(S) obj_send_message(String(), "stringWithString", S)

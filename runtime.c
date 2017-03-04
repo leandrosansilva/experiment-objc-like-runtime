@@ -8,11 +8,12 @@
 
 #include "Class.h"
 #include "Object.h"
+#include "Object_Private.h"
 #include "String.h"
 #include "Number.h"
 #include "Object.h"
 #include "Box.h"
-#include "Object_Private.h"
+#include "Array.h"
 
 struct Class_Object_Private
 {
@@ -57,6 +58,7 @@ void obj_init_runtime()
 	obj_initialize_class(String(), obj_string_initializer);
 	obj_initialize_class(Number(), obj_number_initializer);
 	obj_initialize_class(Box(), obj_box_initializer);
+	obj_initialize_class(Array(), obj_array_initializer);
 }
 
 void obj_shutdown_runtime()
@@ -143,23 +145,36 @@ obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selec
 	return NULL;
 }
 
-// FIXME: this function is a copy of obj_send_message. Refactor is needed!
-// The problem here is the va_args...
-struct Object* obj_send_message_to_super(struct Object* obj, const char* selectorName, ...)
+static struct Object* privSendMessageWithArguments(struct Object* obj, struct Class_Object* klass, const char* selectorName, va_list arguments)
 {
-	if (obj == NULL) {
-		return NULL;
-	}
+	obj_selector selector = obj_selector_for_name(klass, selectorName);
 
-	obj_selector selector = obj_selector_for_name(obj->klass->priv->parent, selectorName);
-
+	// TODO: maybe return SelectorNotFound()?
 	if (selector == NULL) {
 		return NULL;
 	}
 
+	struct Object* result = selector(obj, arguments);
+
+	return result;
+}
+
+struct Object* obj_send_message_with_arguments(struct Object* obj, const char* selectorName, va_list arguments)
+{
+	return privSendMessageWithArguments(obj, obj_class_for_object(obj), selectorName, arguments);
+}
+
+struct Object* obj_send_message_to_super_with_arguments(struct Object* obj, const char* selectorName, va_list arguments)
+{
+	struct Class_Object* klass = obj_class_parent(obj_class_for_object(obj));
+	return privSendMessageWithArguments(obj, klass, selectorName, arguments);
+}
+
+struct Object* obj_send_message_to_super(struct Object* obj, const char* selectorName, ...)
+{
 	va_list arguments;
 	va_start(arguments, selectorName);
-	struct Object* result = selector(obj, arguments);
+	struct Object* result = obj_send_message_to_super_with_arguments(obj, selectorName, arguments);
 	va_end(arguments);
 
 	return result;
@@ -167,20 +182,9 @@ struct Object* obj_send_message_to_super(struct Object* obj, const char* selecto
 
 struct Object* obj_send_message(struct Object* obj, const char* selectorName, ...)
 {
-	if (obj == NULL) {
-		return NULL;
-	}
-
-	obj_selector selector = obj_selector_for_name(obj->klass, selectorName);
-
-	// TODO: maybe retorn SelectorNotFound()?
-	if (selector == NULL) {
-		return NULL;
-	}
-
 	va_list arguments;
 	va_start(arguments, selectorName);
-	struct Object* result = selector(obj, arguments);
+	struct Object* result = obj_send_message_with_arguments(obj, selectorName, arguments);
 	va_end(arguments);
 
 	return result;
@@ -295,4 +299,32 @@ const char* obj_class_name(struct Class_Object* klass)
 struct Class_Object* obj_class_for_object(struct Object* object)
 {
 	return object == NULL ? NULL : object->klass;
+}
+
+struct Class_Object* obj_class_parent(struct Class_Object* klass)
+{
+	return klass == NULL ? NULL : klass->priv->parent;
+}
+
+size_t obj_number_of_call_arguments_ending_on_null(va_list arguments)
+{
+	va_list copy;
+	va_copy(copy, arguments);
+
+	size_t number_of_arguments = 0;
+
+	struct Object* obj = NULL;
+
+	while (obj = va_arg(copy, struct Object*)) {
+		number_of_arguments++;
+	}
+	
+	va_end(copy);
+
+	return number_of_arguments;
+}
+
+bool obj_object_is_class(struct Object* object)
+{
+	return object->priv->tag == obj_runtime_type_class;
 }
