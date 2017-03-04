@@ -89,7 +89,6 @@ static struct Object* alloc_selector(struct Class_Object* self, va_list argument
 
 static struct Object* dealloc_selector(struct Object* self, va_list arguments)
 {
-	printf("Calling dealloc for %s\n", obj_class_name(obj_class_for_object(self)));
 	free(self->priv);
 	return NULL;
 }
