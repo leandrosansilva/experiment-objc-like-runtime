@@ -81,13 +81,24 @@ void obj_shutdown_runtime()
 static void print_diagram_for_class(struct Class_Object* klass)
 {
 	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
+
+	struct Class_Object* typeKlass = klass->proto.klass;
+
+	// "workarounded class with static methods" 
+	if (typeKlass != NULL) {
+		for (struct ObjectSelectorPair* pair = typeKlass->priv->selectors; pair != NULL; pair = pair->next) {
+			printf("+ %s \\<\\<static\\>\\>\\l", pair->selectorName);
+		}
+
+		// The inheritance arrow // FIXME: print it properly!!!
+		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->priv->parent);
+	}
+
 	for (struct ObjectSelectorPair* pair = klass->priv->selectors; pair != NULL; pair = pair->next) {
 		printf("+ %s\\l", pair->selectorName);
 	}
-	printf("}\"\n  ]\n");
 
-	// The inheritance arrow
-	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->priv->parent);
+	printf("}\"\n  ]\n");
 
 	// The "type" class
 	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n", (unsigned long long)klass, (unsigned long long)klass->proto.klass);
@@ -235,17 +246,17 @@ static void privInitializeClass(struct Class_Object* klass, obj_class_initialize
 	if (initializer != NULL) {
 		initializer(klass);
 	}
-
-	struct Class_Object_List* l = malloc(sizeof(struct Class_Object_List));
-	l->next = list_of_registred_classes;
-	l->klass = klass;
-	list_of_registred_classes = l;
 }
 
 void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer)
 {
 	bool createStatic = klass != Object() && klass != Class();
 	privInitializeClass(klass, initializer, createStatic);
+
+	struct Class_Object_List* l = malloc(sizeof(struct Class_Object_List));
+	l->next = list_of_registred_classes;
+	l->klass = klass;
+	list_of_registred_classes = l;
 }
 
 static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)

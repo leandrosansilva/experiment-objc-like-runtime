@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 
 	struct Array* names = obj_send_message(Array(), "arrayWithElements", RETAIN(length), RETAIN(name), String(), NULL);
 
-	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
+	//printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 
 	struct String* format = STRING("Name: %@, length: %@");
 
