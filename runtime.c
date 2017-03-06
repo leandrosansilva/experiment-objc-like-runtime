@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "Class.h"
 #include "Object.h"
@@ -82,16 +83,14 @@ static void print_diagram_for_class(struct Class_Object* klass)
 {
 	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
 
+	struct Class_Object* parent = obj_class_parent(klass);
+
 	struct Class_Object* typeKlass = klass->proto.klass;
 
-	// "workarounded class with static methods" 
-	if (typeKlass != NULL) {
+	if (typeKlass != NULL && klass != Class()) {
 		for (struct ObjectSelectorPair* pair = typeKlass->priv->selectors; pair != NULL; pair = pair->next) {
 			printf("+ %s \\<\\<static\\>\\>\\l", pair->selectorName);
 		}
-
-		// The inheritance arrow // FIXME: print it properly!!!
-		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n", (unsigned long long)klass, (unsigned long long)klass->priv->parent);
 	}
 
 	for (struct ObjectSelectorPair* pair = klass->priv->selectors; pair != NULL; pair = pair->next) {
@@ -101,13 +100,21 @@ static void print_diagram_for_class(struct Class_Object* klass)
 	printf("}\"\n  ]\n");
 
 	// The "type" class
-	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n", (unsigned long long)klass, (unsigned long long)klass->proto.klass);
+	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n",
+			(unsigned long long)klass,
+			(unsigned long long)obj_class_for_object(klass));
+
+	if (obj_class_parent(klass) != NULL) {
+		// The inheritance arrow
+		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n",
+				(unsigned long long)klass,
+				(unsigned long long)obj_class_parent(klass));
+	}
 }
 
 void obj_print_class_diagram()
 {
 	printf("digraph G {\n");
-	printf("  class_addr_%lld [\n    label = \"GOD\"\n  ]\n", NULL);
 	printf(
 "  fontname = \"Bitstream Vera Sans\"\n"
 "  fontsize = 8\n"
@@ -309,7 +316,25 @@ const char* obj_class_name(struct Class_Object* klass)
 
 struct Class_Object* obj_class_for_object(struct Object* object)
 {
-	return object == NULL ? NULL : object->klass;
+	if (object == NULL) {
+		return NULL;
+	}
+
+	if (object->priv->tag == obj_runtime_type_object) {
+		return object->klass;
+	}
+
+	if (object == (struct Object*)Class()) {
+		return Object();
+	}
+
+	if (object == (struct Object*)Object()) {
+		return Class();
+	}
+
+	assert(object->klass->priv->parent == Class());
+
+	return object->klass->priv->parent;
 }
 
 struct Class_Object* obj_class_parent(struct Class_Object* klass)
