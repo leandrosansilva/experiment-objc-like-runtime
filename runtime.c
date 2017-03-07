@@ -16,14 +16,16 @@
 #include "Box.h"
 #include "Array.h"
 
+struct ObjectSelectorPair;
+struct ObjectPropertyPair;
+
 struct Class_Object_Private
 {
 	struct Class_Object* parent;
 	const char* name;
 	struct ObjectSelectorPair* selectors;
+	struct ObjectSelectorPair* properties;
 };
-
-struct ObjectSelectorPair;
 
 static struct Class_Object _Class;
 
@@ -64,10 +66,10 @@ void obj_init_runtime()
 
 void obj_shutdown_runtime()
 {
-	obj_unload_class(Class());
-	obj_unload_class(Object());
 	obj_unload_class(String());
 	obj_unload_class(Number());
+	obj_unload_class(Object());
+	obj_unload_class(Class());
 
 	// unregister all classes...
 	struct Class_Object_List* tmp;
@@ -82,8 +84,6 @@ void obj_shutdown_runtime()
 static void print_diagram_for_class(struct Class_Object* klass)
 {
 	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
-
-	struct Class_Object* parent = obj_class_parent(klass);
 
 	struct Class_Object* typeKlass = klass->proto.klass;
 
@@ -152,7 +152,7 @@ void obj_add_class_selector(struct Class_Object* klass, const char* selectorName
 obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName)
 {
 	// NOTE: this is the worst implementation of method lookup ever!
-	for (struct Class_Object* k = klass; k != NULL; k = k->priv->parent) {
+	for (struct Class_Object* k = klass; k != NULL; k = obj_class_parent(k)) {
 		for (struct ObjectSelectorPair* pair = k->priv->selectors; pair != NULL; pair = pair->next) {
 			if (strcmp(pair->selectorName, selectorName) == 0) {
 				return pair->selector;
@@ -277,18 +277,15 @@ static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelecto
 	}
 }
 
-static void privUnloadClass(struct Class_Object* klass, bool unloadStatic)
+static void privUnloadClass(struct Class_Object* klass)
 {
-	if (unloadStatic)
-	{
-		privUnloadClass(klass->proto.klass, false);
-	}
-
-	if (klass->proto.klass != Object() && klass->proto.klass != Class()) {
-		free(klass->proto.klass);
-	}
-
 	deleteClassSelector(klass, klass->priv->selectors);
+
+	if (klass->proto.klass != Class() && klass->proto.klass != Object()) {
+		deleteClassSelector(klass->proto.klass, klass->proto.klass->priv->selectors);
+		free(klass->proto.klass->proto.priv);
+		free(klass->proto.klass->priv);
+	}
 
 	free(klass->proto.priv);
 	free(klass->priv);
@@ -296,7 +293,7 @@ static void privUnloadClass(struct Class_Object* klass, bool unloadStatic)
 
 void obj_unload_class(struct Class_Object* klass)
 {
-	privUnloadClass(klass, true);
+	privUnloadClass(klass);
 }
 
 void obj_set_class_parent(struct Class_Object* klass, struct Class_Object* parent)

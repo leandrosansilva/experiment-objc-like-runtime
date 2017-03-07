@@ -51,5 +51,8 @@ size_t obj_number_of_call_arguments_ending_on_null(va_list arguments);
 
 bool obj_object_is_class(struct Object* object);
 
+struct Object* obj_get_object_property(struct Object* object, const char* propertyName);
+struct Object* obj_set_object_property(struct Object* object, const char* propertyName, struct Object* value);
+
 #define RETAIN(OBJ) obj_send_message((OBJ), "retain")
 #define RELEASE(OBJ) obj_send_message(obj_class_for_object(OBJ), "release", &OBJ)
