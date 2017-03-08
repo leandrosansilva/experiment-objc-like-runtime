@@ -6,6 +6,7 @@
 #include "Array.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 int main(int argc, char** argv)
 {
@@ -37,7 +38,11 @@ int main(int argc, char** argv)
 
 	struct String* book = STRING("The book is on the table");
 	struct Number* bookLength = obj_send_message(book, "length");
-	struct Box* bookLengthBox = obj_send_message(bookLength,"boxedValue");
+	struct Box* bookLengthBox = obj_send_message(bookLength, "boxedValue");
+
+	struct Object* bookLengthCaller = obj_get_object_property(bookLengthBox, "caller");
+
+	assert(bookLengthCaller == bookLength);
 
 	RELEASE(bookLength);
 	RELEASE(bookLengthBox);

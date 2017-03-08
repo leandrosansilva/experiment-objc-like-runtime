@@ -54,5 +54,7 @@ bool obj_object_is_class(struct Object* object);
 struct Object* obj_get_object_property(struct Object* object, const char* propertyName);
 struct Object* obj_set_object_property(struct Object* object, const char* propertyName, struct Object* value);
 
+void obj_add_property(struct Class_Object* klass, const char* propertyName, struct Class_Object* type, size_t offset);
+
 #define RETAIN(OBJ) obj_send_message((OBJ), "retain")
 #define RELEASE(OBJ) obj_send_message(obj_class_for_object(OBJ), "release", &OBJ)

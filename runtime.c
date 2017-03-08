@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stddef.h>
 
 #include "Class.h"
 #include "Object.h"
@@ -16,15 +17,21 @@
 #include "Box.h"
 #include "Array.h"
 
-struct ObjectSelectorPair;
-struct ObjectPropertyPair;
-
 struct Class_Object_Private
 {
 	struct Class_Object* parent;
 	const char* name;
 	struct ObjectSelectorPair* selectors;
 	struct ObjectSelectorPair* properties;
+};
+
+// NOTE: the property list is also a linked list.
+struct ObjectPropertyPair
+{
+	const char* name;
+	size_t offset;
+	struct Class_Object* klass;
+	struct ObjectPropertyPair* next;
 };
 
 static struct Class_Object _Class;
@@ -95,6 +102,14 @@ static void print_diagram_for_class(struct Class_Object* klass)
 
 	for (struct ObjectSelectorPair* pair = klass->priv->selectors; pair != NULL; pair = pair->next) {
 		printf("+ %s\\l", pair->selectorName);
+	}
+
+	if (klass->priv->properties != NULL) {
+		printf("|\n");
+
+		for (struct ObjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
+			printf("- %s: %s\\l", pair->name, obj_class_name(pair->klass));
+		}
 	}
 
 	printf("}\"\n  ]\n");
@@ -179,7 +194,7 @@ static struct Object* privSendMessageWithArguments(struct Object* obj, struct Cl
 
 struct Object* obj_send_message_with_arguments(struct Object* obj, const char* selectorName, va_list arguments)
 {
-	return privSendMessageWithArguments(obj, obj_class_for_object(obj), selectorName, arguments);
+	return privSendMessageWithArguments(obj, obj ? obj->klass : NULL, selectorName, arguments);
 }
 
 struct Object* obj_send_message_to_super_with_arguments(struct Object* obj, const char* selectorName, va_list arguments)
@@ -266,6 +281,19 @@ void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_call
 	list_of_registred_classes = l;
 }
 
+static void deleteClassProperties(struct Class_Object* klass, struct ObjectPropertyPair* pair)
+{
+	// FIXME: a copy of deleteClassSelector
+	struct ObjectPropertyPair* tmp;
+
+	while(pair != NULL) {
+		tmp = pair;
+		pair = pair->next;
+		free(tmp);
+	}
+}
+
+
 static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)
 {
 	struct ObjectSelectorPair* tmp;
@@ -280,9 +308,12 @@ static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelecto
 static void privUnloadClass(struct Class_Object* klass)
 {
 	deleteClassSelector(klass, klass->priv->selectors);
+	deleteClassProperties(klass, klass->priv->properties);
 
 	if (klass->proto.klass != Class() && klass->proto.klass != Object()) {
 		deleteClassSelector(klass->proto.klass, klass->proto.klass->priv->selectors);
+		deleteClassProperties(klass->proto.klass, klass->proto.klass->priv->properties);
+
 		free(klass->proto.klass->proto.priv);
 		free(klass->proto.klass->priv);
 	}
@@ -360,4 +391,52 @@ size_t obj_number_of_call_arguments_ending_on_null(va_list arguments)
 bool obj_object_is_class(struct Object* object)
 {
 	return object->priv->tag == obj_runtime_type_class;
+}
+
+struct Object* obj_get_object_property(struct Object* object, const char* propertyName)
+{
+	struct Class_Object* klass = obj_class_for_object(object);
+
+	for (struct Class_Object* k = klass; k != NULL; k = obj_class_parent(k)) {
+		for (struct ObjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
+			if (strcmp(prop->name, propertyName) == 0) {
+				size_t offset = prop->offset;
+				return *(struct Object**)((ptrdiff_t*)object + offset);
+			}
+		}
+	}
+
+	return NULL;
+}
+
+struct Object* obj_set_object_property(struct Object* object, const char* propertyName, struct Object* value)
+{
+	struct Class_Object* klass = obj_class_for_object(object);
+
+	for (struct Class_Object* k = klass; k != NULL; k = obj_class_parent(k)) {
+		for (struct ObjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
+			if (strcmp(prop->name, propertyName) == 0) {
+				size_t offset = prop->offset;
+				*(struct Object**)((ptrdiff_t*)object + offset) = value;
+				return object;
+			}
+		}
+	}
+
+	// TODO: what if the property was not found?
+
+	return object;
+}
+
+void obj_add_property(struct Class_Object* klass, const char* propertyName, struct Class_Object* type, size_t offset)
+{
+	// FIXME: code copied from obj_add_selector!!!
+	struct ObjectPropertyPair *pair = malloc(sizeof(struct ObjectPropertyPair));
+	pair->name = propertyName;
+	pair->offset = offset;
+	pair->klass = type;
+
+	// insert at the beginning of the list
+	pair->next = klass->priv->properties;
+	klass->priv->properties = pair;
 }

@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 
 struct Class_Box
 {
@@ -30,7 +31,7 @@ static struct Box* init_with_value(struct Box* self, va_list arguments)
 {
 	if (self = obj_send_message_to_super(self, "init")) {
 		struct Object* caller = va_arg(arguments, struct Object*);
-		RETAIN(self->caller = caller);
+		obj_set_object_property(self, "caller", RETAIN(caller));
 
 		void* value = va_arg(arguments, void*);
 		self->value = value;
@@ -55,4 +56,6 @@ void obj_box_initializer(struct Class_Box* klass)
 
 	obj_add_selector(klass, "initWithValue", init_with_value);
 	obj_add_selector(klass, "dealloc", dealloc_selector);
+
+	obj_add_property(klass, "caller", Object(), offsetof(struct Box, value));
 }
