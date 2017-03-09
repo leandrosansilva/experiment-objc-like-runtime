@@ -1,11 +1,11 @@
 #pragma once
 
-#include <lolbject/Object.h>
+#include <lolbject/Lolbject.h>
 
 struct LolClass_Private;
 
 struct LolClass
 {
-	struct Object proto;
+	struct Lolbject proto;
 	struct LolClass_Private* priv;
 };

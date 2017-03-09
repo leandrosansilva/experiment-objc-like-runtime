@@ -1,7 +1,7 @@
 #pragma once
 
 #include <lolbject/Class.h>
-#include <lolbject/Object.h>
+#include <lolbject/Lolbject.h>
 
 struct String;
 

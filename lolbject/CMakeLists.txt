@@ -1,6 +1,6 @@
 set(lolbject_runtime
 	runtime.c
-	Object.c
+	Lolbject.c
 )
 
 set(lolbject_core

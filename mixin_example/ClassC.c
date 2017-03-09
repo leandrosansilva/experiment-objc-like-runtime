@@ -10,7 +10,7 @@
 
 struct ClassC
 {
-	struct Object super;
+	struct Lolbject super;
 	struct ClassA* a;
 	struct ClassB* b;
 };
@@ -23,7 +23,7 @@ struct LolClass* ClassC()
 }
 
 // Selectors
-static struct Object* object_size_selector(struct Object* self, va_list arguments)
+static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
 {
 	size_t* size = va_arg(arguments, size_t*);
 	*size = sizeof(struct ClassC);
@@ -40,7 +40,7 @@ static struct ClassC* init_selector(struct ClassC* self, va_list arguments)
 	return self;
 }
 
-static struct Object* dealloc_selector(struct ClassC* self, va_list arguments)
+static struct Lolbject* dealloc_selector(struct ClassC* self, va_list arguments)
 {
 	RELEASE(self->a);
 	RELEASE(self->b);
@@ -52,7 +52,7 @@ static struct Object* dealloc_selector(struct ClassC* self, va_list arguments)
 
 void obj_class_c_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, obj_class_with_name("Object"));
+	obj_set_class_parent(klass, obj_class_with_name("Lolbject"));
 	obj_set_class_name(klass, "ClassC");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

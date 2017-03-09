@@ -1,5 +1,5 @@
 #include <lolbject/runtime.h>
-#include <lolbject/Object.h>
+#include <lolbject/Lolbject.h>
 #include <lolbject/String.h>
 #include <lolbject/Number.h>
 #include <lolbject/Box.h>

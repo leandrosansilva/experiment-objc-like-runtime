@@ -1,14 +1,14 @@
 #pragma once
 
-struct Object_Private;
+struct Lolbject_Private;
 struct LolClass;
 
-struct Object
+struct Lolbject
 {
 	struct LolClass* klass;
-	struct Object_Private* priv;
+	struct Lolbject_Private* priv;
 };
 
-struct LolClass* Object();
+struct LolClass* Lolbject();
 
 void obj_object_initializer(struct LolClass* klass);

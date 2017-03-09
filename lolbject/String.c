@@ -10,7 +10,7 @@
 
 struct String
 {
-	struct Object super;
+	struct Lolbject super;
 	char* content;
 };
 
@@ -22,7 +22,7 @@ struct LolClass* String()
 }
 
 // Selectors
-static struct Object* object_size_selector(struct Object* self, va_list arguments)
+static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
 {
 	size_t* size = va_arg(arguments, size_t*);
 	*size = sizeof(struct String);
@@ -35,7 +35,7 @@ static struct Number* string_length_selector(struct String* self, va_list argume
 	return obj_send_message(obj_send_message(Number(), "alloc"), "initWithInt", l);
 }
 
-static struct Object* string_dealloc_selector(struct String* self, va_list arguments)
+static struct Lolbject* string_dealloc_selector(struct String* self, va_list arguments)
 {
 	if (self->content != NULL) {
 		free(self->content);
@@ -84,7 +84,7 @@ static struct Box* get_boxed_value(struct String* self, va_list arguments)
 
 void obj_string_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Object());
+	obj_set_class_parent(klass, Lolbject());
 	obj_set_class_name(klass, "String");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

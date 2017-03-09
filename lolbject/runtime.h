@@ -3,17 +3,21 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-struct Object;
+struct Lolbject;
 struct LolClass;
 
+// FIXME: specify properly
 struct Module_Descriptor
 {
 	// pointers to callbacks
-	int a;
+	uint16_t version;
+	void (*init_module)(struct LolClass*);
+	void (*shutdown_module)(struct LolClass*);
 };
 
-typedef struct Object* (*obj_selector)(struct Object*, va_list);
+typedef struct Lolbject* (*obj_selector)(struct Lolbject*, va_list);
 
 typedef void (*obj_class_initializer_callback)(struct LolClass*);
 
@@ -27,11 +31,11 @@ void obj_add_class_selector(struct LolClass* klass, const char* selectorName, ob
 
 obj_selector obj_selector_for_name(struct LolClass* klass, const char* selectorName);
 
-struct Object* obj_send_message(struct Object* obj, const char* selectorName, ...);
-struct Object* obj_send_message_to_super(struct Object* obj, const char* selectorName, ...);
+struct Lolbject* obj_send_message(struct Lolbject* obj, const char* selectorName, ...);
+struct Lolbject* obj_send_message_to_super(struct Lolbject* obj, const char* selectorName, ...);
 
-struct Object* obj_send_message_with_arguments(struct Object* obj, const char* selectorName, va_list arguments);
-struct Object* obj_send_message_to_super_with_arguments(struct Object* obj, const char* selectorName, va_list arguments);
+struct Lolbject* obj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
+struct Lolbject* obj_send_message_to_super_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
 
 void obj_unload_class(struct LolClass* klass);
 
@@ -55,14 +59,14 @@ void obj_set_class_name(struct LolClass* klass, const char* name);
 
 const char* obj_class_name(struct LolClass* klass);
 
-struct LolClass* obj_class_for_object(struct Object* object);
+struct LolClass* obj_class_for_object(struct Lolbject* object);
 
 size_t obj_number_of_call_arguments_ending_on_null(va_list arguments);
 
-bool obj_object_is_class(struct Object* object);
+bool obj_object_is_class(struct Lolbject* object);
 
-struct Object* obj_get_object_property(struct Object* object, const char* propertyName);
-struct Object* obj_set_object_property(struct Object* object, const char* propertyName, struct Object* value);
+struct Lolbject* obj_get_object_property(struct Lolbject* object, const char* propertyName);
+struct Lolbject* obj_set_object_property(struct Lolbject* object, const char* propertyName, struct Lolbject* value);
 
 void obj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset);
 

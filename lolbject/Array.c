@@ -2,12 +2,12 @@
 
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
-#include <lolbject/Object.h>
+#include <lolbject/Lolbject.h>
 
 struct Array
 {
-	struct Object super;
-	struct Object** elements;
+	struct Lolbject super;
+	struct Lolbject** elements;
 	size_t capacity;
 	size_t length;
 };
@@ -20,7 +20,7 @@ struct LolClass* Array()
 }
 
 // Selectors
-static struct Object* object_size_selector(struct Object* self, va_list arguments)
+static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
 {
 	size_t* size = va_arg(arguments, size_t*);
 	*size = sizeof(struct Array);
@@ -40,10 +40,10 @@ static struct Array* init_with_elements_selector(struct Array* self, va_list arg
 		self->capacity = number_of_arguments;
 		self->length = number_of_arguments;
 
-		self->elements = calloc(sizeof(struct Object*), number_of_arguments);
+		self->elements = calloc(sizeof(struct Lolbject*), number_of_arguments);
 
 		for (size_t i = 0; i < number_of_arguments; i++) {
-			struct Object* element = va_arg(arguments, struct Object*);
+			struct Lolbject* element = va_arg(arguments, struct Lolbject*);
 			self->elements[i] = element;
 		}
 	}
@@ -51,7 +51,7 @@ static struct Array* init_with_elements_selector(struct Array* self, va_list arg
 	return self;
 }
 
-static struct Object* dealloc_selector(struct Array* self, va_list arguments)
+static struct Lolbject* dealloc_selector(struct Array* self, va_list arguments)
 {
 	if (self->elements != NULL) {
 		for (size_t i = 0; i < self->length; i++) {
@@ -68,7 +68,7 @@ static struct Object* dealloc_selector(struct Array* self, va_list arguments)
 
 void obj_array_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Object());
+	obj_set_class_parent(klass, Lolbject());
 	obj_set_class_name(klass, "Array");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

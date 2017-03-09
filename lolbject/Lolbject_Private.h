@@ -10,7 +10,7 @@ enum obj_runtime_type
 
 typedef uint8_t obj_runtime_type;
 
-struct Object_Private
+struct Lolbject_Private
 {
 	obj_runtime_type tag;
 	uint16_t ref_counter;

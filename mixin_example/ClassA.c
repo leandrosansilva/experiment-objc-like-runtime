@@ -7,7 +7,7 @@
 
 struct ClassA
 {
-	struct Object super;
+	struct Lolbject super;
 };
 
 static struct LolClass _ClassA;
@@ -18,7 +18,7 @@ struct LolClass* ClassA()
 }
 
 // Selectors
-static struct Object* object_size_selector(struct Object* self, va_list arguments)
+static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
 {
 	size_t* size = va_arg(arguments, size_t*);
 	*size = sizeof(struct ClassA);
@@ -33,7 +33,7 @@ static struct ClassA* hello_selector(struct ClassA* self, va_list arguments)
 
 void obj_class_a_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, obj_class_with_name("Object"));
+	obj_set_class_parent(klass, obj_class_with_name("Lolbject"));
 	obj_set_class_name(klass, "ClassA");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

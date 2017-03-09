@@ -1,35 +1,35 @@
-#include <lolbject/Object.h>
+#include <lolbject/Lolbject.h>
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
 #include <lolbject/String.h>
 #include <lolbject/Number.h>
 
-#include "Object_Private.h"
+#include "Lolbject_Private.h"
 
 #include <stdint.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-static struct LolClass _Object;
+static struct LolClass _Lolbject;
 
-struct LolClass* Object()
+struct LolClass* Lolbject()
 {
-	return &_Object;
+	return &_Lolbject;
 }
 
-static struct String* description_selector(struct Object* self, va_list arguments)
+static struct String* description_selector(struct Lolbject* self, va_list arguments)
 {
 	struct String* nameAsDescription = STRING(obj_class_name(obj_class_for_object(self)));
-	return nameAsDescription; // TODO: format like: "Object <address>"
+	return nameAsDescription; // TODO: format like: "Lolbject <address>"
 }
 
-static struct Object* init_selector(struct Object* self, va_list arguments)
+static struct Lolbject* init_selector(struct Lolbject* self, va_list arguments)
 {
 	return self;
 }
 
-static struct Object* retain_selector(struct Object* self, va_list arguments)
+static struct Lolbject* retain_selector(struct Lolbject* self, va_list arguments)
 {
 	if (!obj_object_is_class(self)) {
 		self->priv->ref_counter++;
@@ -38,9 +38,9 @@ static struct Object* retain_selector(struct Object* self, va_list arguments)
 	return self;
 }
 
-static struct Object* release_object_selector(struct LolClass* self, va_list arguments)
+static struct Lolbject* release_object_selector(struct LolClass* self, va_list arguments)
 {
-	struct Object** object = va_arg(arguments, struct Object*);
+	struct Lolbject** object = va_arg(arguments, struct Lolbject*);
 
 	assert(object != NULL);
 	assert(*object != NULL);
@@ -63,7 +63,7 @@ static struct Object* release_object_selector(struct LolClass* self, va_list arg
 	return NULL;
 }
 
-static struct Object* alloc_selector(struct LolClass* self, va_list arguments)
+static struct Lolbject* alloc_selector(struct LolClass* self, va_list arguments)
 {
 	size_t size = 0;
 
@@ -73,21 +73,21 @@ static struct Object* alloc_selector(struct LolClass* self, va_list arguments)
 		return NULL;
 	}
 
-	assert(size >= sizeof(struct Object) && "Object is too small!");
+	assert(size >= sizeof(struct Lolbject) && "Lolbject is too small!");
 
-	struct Object* obj = malloc(size);
+	struct Lolbject* obj = malloc(size);
 	memset(obj, 0, size);
 
 	obj->klass = (struct LolClass*)self;
 
-	obj->priv = malloc(sizeof(struct Object_Private));
+	obj->priv = malloc(sizeof(struct Lolbject_Private));
 	obj->priv->tag = obj_runtime_type_object;
 	obj->priv->ref_counter = 1;
 
 	return obj;
 }
 
-static struct Object* dealloc_selector(struct Object* self, va_list arguments)
+static struct Lolbject* dealloc_selector(struct Lolbject* self, va_list arguments)
 {
 	free(self->priv);
 	return NULL;
@@ -95,7 +95,7 @@ static struct Object* dealloc_selector(struct Object* self, va_list arguments)
 
 void obj_object_initializer(struct LolClass* klass)
 {
-	obj_set_class_name(klass, "Object");
+	obj_set_class_name(klass, "Lolbject");
 	obj_set_class_parent(klass, NULL);
 
 	obj_add_class_selector(klass, "release", release_object_selector);

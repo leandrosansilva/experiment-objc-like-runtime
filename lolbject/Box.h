@@ -1,11 +1,11 @@
 #pragma once
 
-#include <lolbject/Object.h>
+#include <lolbject/Lolbject.h>
 
 struct Box
 {
-	struct Object super;
-	struct Object* caller;
+	struct Lolbject super;
+	struct Lolbject* caller;
 	void* value;
 };
 
