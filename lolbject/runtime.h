@@ -58,5 +58,7 @@ void obj_add_property(struct Class_Object* klass, const char* propertyName, stru
 
 void obj_add_selector_from_property(struct Class_Object* klass, struct Class_Object* memberClass, const char* memberName, const char* selectorName); 
 
+struct Class_Object* obj_class_with_name(const char* klassName);
+
 #define RETAIN(OBJ) obj_send_message((OBJ), "retain")
 #define RELEASE(OBJ) obj_send_message(obj_class_for_object(OBJ), "release", &OBJ)

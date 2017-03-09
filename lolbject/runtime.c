@@ -499,3 +499,14 @@ void obj_add_selector_from_property(struct Class_Object* klass, struct Class_Obj
 
 	obj_add_selector(klass, selectorName, selector);
 }
+
+struct Class_Object* obj_class_with_name(const char* klassName)
+{
+	for (struct Class_Object_List* l = list_of_registred_classes; l != NULL; l = l->next) {
+		if (strcmp(obj_class_name(l->klass), klassName) == 0) {
+			return l->klass;
+		}
+	}
+
+	return NULL;
+}

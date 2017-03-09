@@ -33,8 +33,8 @@ struct Class_${class_name}* ${class_name}();
 
 implementation_template_text = """#include "${class_name}.h"
 
-#include "Class.h"
-#include "runtime.h"
+#include <lolbject/Class.h>
+#include <lolbject/runtime.h>
 #include "${parent_class_name}.h"
 
 struct ${class_name}
