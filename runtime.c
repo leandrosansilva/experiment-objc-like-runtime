@@ -100,48 +100,48 @@ void obj_shutdown_runtime()
 	}
 }
 
-static void print_diagram_for_class(struct Class_Object* klass)
+static void print_diagram_for_class(FILE* p, struct Class_Object* klass)
 {
-	printf("  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
+	fprintf(p, "  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
 
 	struct Class_Object* typeKlass = klass->proto.klass;
 
 	if (typeKlass != NULL && klass != Class()) {
 		for (struct ObjectSelectorPair* pair = typeKlass->priv->selectors; pair != NULL; pair = pair->next) {
-			printf("+ %s \\<\\<static\\>\\>\\l", pair->selectorName);
+			fprintf(p, "+ %s \\<\\<static\\>\\>\\l", pair->selectorName);
 		}
 	}
 
 	for (struct ObjectSelectorPair* pair = klass->priv->selectors; pair != NULL; pair = pair->next) {
-		printf("+ %s\\l", pair->selectorName);
+		fprintf(p, "+ %s\\l", pair->selectorName);
 	}
 
 	if (klass->priv->properties != NULL) {
-		printf("|\n");
+		fprintf(p, "|\n");
 
 		for (struct ObjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
-			printf("- %s: %s\\l", pair->name, obj_class_name(pair->klass));
+			fprintf(p, "- %s: %s\\l", pair->name, obj_class_name(pair->klass));
 		}
 	}
 
-	printf("}\"\n  ]\n");
+	fprintf(p, "}\"\n  ]\n");
 
 	// The "type" class
-	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n",
+	fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n",
 			(unsigned long long)klass,
 			(unsigned long long)obj_class_for_object(klass));
 	
 	// Properties
 	for (struct ObjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
 		struct Class_Object* memberClass = pair->klass;	
-		printf("  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back]\n",
+		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back]\n",
 			(unsigned long long)klass,
 			(unsigned long long)memberClass);
 	}
 
 	if (obj_class_parent(klass) != NULL) {
 		// The inheritance arrow
-		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n",
+		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n",
 			(unsigned long long)klass,
 			(unsigned long long)obj_class_parent(klass));
 	}
@@ -149,8 +149,14 @@ static void print_diagram_for_class(struct Class_Object* klass)
 
 void obj_print_class_diagram()
 {
-	printf("digraph G {\n");
-	printf(
+	FILE* p = popen("xdot -", "w");
+
+	if (p == NULL) {
+		return;
+	}
+
+	fprintf(p, "digraph G {\n");
+	fprintf(p,
 "  fontname = \"Bitstream Vera Sans\"\n"
 "  fontsize = 8\n"
 "  node [\n"
@@ -163,9 +169,11 @@ void obj_print_class_diagram()
 "    fontsize = 8\n"
 "  ]\n");
 	for (struct Class_Object_List* l = list_of_registred_classes; l != NULL; l = l->next) {
-		print_diagram_for_class(l->klass);
+		print_diagram_for_class(p, l->klass);
 	}
-	printf("}\n");
+	fprintf(p, "}\n");
+
+	pclose(p);
 }
 
 void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector)
