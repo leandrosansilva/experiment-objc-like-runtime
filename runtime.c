@@ -17,12 +17,24 @@
 #include "Box.h"
 #include "Array.h"
 
+struct ObjectMemberPair {
+	const char* selectorName;
+	const char* propertyName;
+}; 
+
+struct ObjectMembers
+{
+	struct ObjectMemberPair values[1024];
+	size_t count;
+};
+
 struct Class_Object_Private
 {
 	struct Class_Object* parent;
 	const char* name;
 	struct ObjectSelectorPair* selectors;
-	struct ObjectSelectorPair* properties;
+	struct ObjectPropertyPair* properties;
+	struct ObjectMembers members;
 };
 
 // NOTE: the property list is also a linked list.
@@ -118,12 +130,20 @@ static void print_diagram_for_class(struct Class_Object* klass)
 	printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n",
 			(unsigned long long)klass,
 			(unsigned long long)obj_class_for_object(klass));
+	
+	// Properties
+	for (struct ObjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
+		struct Class_Object* memberClass = pair->klass;	
+		printf("  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back]\n",
+			(unsigned long long)klass,
+			(unsigned long long)memberClass);
+	}
 
 	if (obj_class_parent(klass) != NULL) {
 		// The inheritance arrow
 		printf("  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n",
-				(unsigned long long)klass,
-				(unsigned long long)obj_class_parent(klass));
+			(unsigned long long)klass,
+			(unsigned long long)obj_class_parent(klass));
 	}
 }
 
@@ -178,6 +198,18 @@ obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selec
 	return NULL;
 }
 
+struct Object* obj_self_for_selector(struct Object* obj, struct Class_Object* klass, const char* selectorName)
+{
+	for (size_t i = 0; i < klass->priv->members.count; i++) {
+		struct ObjectMemberPair pair = klass->priv->members.values[i];
+		if (strcmp(pair.selectorName, selectorName) == 0) {
+			return obj_get_object_property(obj, pair.propertyName);
+		}
+	}
+
+	return obj;
+}
+
 static struct Object* privSendMessageWithArguments(struct Object* obj, struct Class_Object* klass, const char* selectorName, va_list arguments)
 {
 	obj_selector selector = obj_selector_for_name(klass, selectorName);
@@ -187,7 +219,9 @@ static struct Object* privSendMessageWithArguments(struct Object* obj, struct Cl
 		return NULL;
 	}
 
-	struct Object* result = selector(obj, arguments);
+	struct Object* self = obj_self_for_selector(obj, klass, selectorName);
+
+	struct Object* result = selector(self, arguments);
 
 	return result;
 }
@@ -401,7 +435,7 @@ struct Object* obj_get_object_property(struct Object* object, const char* proper
 		for (struct ObjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
 			if (strcmp(prop->name, propertyName) == 0) {
 				size_t offset = prop->offset;
-				return *(struct Object**)((ptrdiff_t*)object + offset);
+				return *(struct Object**)((uint8_t*)object + offset);
 			}
 		}
 	}
@@ -417,7 +451,7 @@ struct Object* obj_set_object_property(struct Object* object, const char* proper
 		for (struct ObjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
 			if (strcmp(prop->name, propertyName) == 0) {
 				size_t offset = prop->offset;
-				*(struct Object**)((ptrdiff_t*)object + offset) = value;
+				*(struct Object**)((uint8_t*)object + offset) = value;
 				return object;
 			}
 		}
@@ -439,4 +473,19 @@ void obj_add_property(struct Class_Object* klass, const char* propertyName, stru
 	// insert at the beginning of the list
 	pair->next = klass->priv->properties;
 	klass->priv->properties = pair;
+}
+
+void obj_add_selector_from_property(struct Class_Object* klass, struct Class_Object* memberClass, const char* propertyName, const char* selectorName)
+{
+	obj_selector selector = obj_selector_for_name(memberClass, selectorName);
+
+	if (selector == NULL) {
+		return;
+	}
+
+	klass->priv->members.values[klass->priv->members.count++] = (struct ObjectMemberPair){
+		.selectorName = selectorName,
+		.propertyName = propertyName};
+
+	obj_add_selector(klass, selectorName, selector);
 }

@@ -5,6 +5,10 @@
 #include "Box.h"
 #include "Array.h"
 
+#include "ClassA.h"
+#include "ClassB.h"
+#include "ClassC.h"
+
 #include <stdio.h>
 #include <assert.h>
 
@@ -14,6 +18,10 @@ int main(int argc, char** argv)
 	(void)argv;
 
 	obj_init_runtime();
+
+	obj_initialize_class(ClassA(), obj_class_a_initializer);
+	obj_initialize_class(ClassB(), obj_class_b_initializer);
+	obj_initialize_class(ClassC(), obj_class_c_initializer);
 
 	obj_print_class_diagram();
 
@@ -25,9 +33,11 @@ int main(int argc, char** argv)
 
 	struct Box* nameValue = obj_send_message(name, "boxedValue");
 
+	struct Object* nameValueCaller = obj_get_object_property(nameValue, "caller");
+
 	struct Array* names = obj_send_message(Array(), "arrayWithElements", RETAIN(length), RETAIN(name), String(), NULL);
 
-	//printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
+	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 
 	struct String* format = STRING("Name: %@, length: %@");
 
@@ -36,17 +46,13 @@ int main(int argc, char** argv)
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");
 
-	struct String* book = STRING("The book is on the table");
-	struct Number* bookLength = obj_send_message(book, "length");
-	struct Box* bookLengthBox = obj_send_message(bookLength, "boxedValue");
+	struct ClassC* c = obj_send_message(obj_send_message(ClassC(), "alloc"), "init");
 
-	struct Object* bookLengthCaller = obj_get_object_property(bookLengthBox, "caller");
+	obj_send_message(c, "helloFromA");
+	obj_send_message(c, "helloFromB");
 
-	assert(bookLengthCaller == bookLength);
+	RELEASE(c);
 
-	RELEASE(bookLength);
-	RELEASE(bookLengthBox);
-	RELEASE(book);
 	RELEASE(format);
 	RELEASE(name);
 	RELEASE(length);

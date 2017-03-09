@@ -57,5 +57,5 @@ void obj_box_initializer(struct Class_Box* klass)
 	obj_add_selector(klass, "initWithValue", init_with_value);
 	obj_add_selector(klass, "dealloc", dealloc_selector);
 
-	obj_add_property(klass, "caller", Object(), offsetof(struct Box, value));
+	obj_add_property(klass, "caller", Object(), offsetof(struct Box, caller));
 }

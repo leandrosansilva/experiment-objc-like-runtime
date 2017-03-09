@@ -10,12 +10,12 @@ add_definitions(
 	-Wno-incompatible-pointer-types
 	-Werror=return-type
 	-std=c99
-	#-fno-omit-frame-pointer
+	-fno-omit-frame-pointer
+	-fno-optimize-sibling-calls # disable tail call elimination
 	#-fsanitize=memory
 	#-fsanitize=address
 	#-fsanitize=undefined
 	#-fsanitize=thread
-	#-fno-optimize-sibling-calls # disable tail call elimination
 )
 
 #SET(sanitizer_libs
@@ -24,8 +24,8 @@ add_definitions(
 #	lsan
 #	)
 
-set(CMAKE_LINKER "clang-3.9")
-set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+#set(CMAKE_LINKER "clang-3.9")
+#set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 add_library(
 	object_like
@@ -36,6 +36,9 @@ add_library(
 	Number.c
 	Box.c
 	Array.c
+	ClassA.c
+	ClassB.c
+	ClassC.c
 	)
 
 add_executable(main main.c)
