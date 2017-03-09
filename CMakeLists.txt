@@ -38,6 +38,5 @@ add_executable(main main.c)
 
 target_link_libraries(main
 	lolbject_core
-	mixin_example
 	${sanitizer_libs}
 )

@@ -22,4 +22,6 @@ add_library(
 	${lolbject_core}
 )
 
+target_link_libraries(lolbject_runtime dl)
+
 target_link_libraries(lolbject_core lolbject_runtime)

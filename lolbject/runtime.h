@@ -7,9 +7,19 @@
 struct Object;
 struct LolClass;
 
+struct Module_Descriptor
+{
+	// pointers to callbacks
+	int a;
+};
+
 typedef struct Object* (*obj_selector)(struct Object*, va_list);
 
 typedef void (*obj_class_initializer_callback)(struct LolClass*);
+
+void obj_register_class_with_descriptor(struct Module_Descriptor* descriptor);
+
+void obj_load_module_from_file(const char* filename);
 
 void obj_add_selector(struct LolClass* klass, const char* selectorName, obj_selector selector);
 

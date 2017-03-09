@@ -4,6 +4,7 @@ add_library(
 	ClassA.c
 	ClassB.c
 	ClassC.c
+	module.c
 )
 
 target_link_libraries(mixin_example lolbject_core)

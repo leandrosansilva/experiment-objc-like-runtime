@@ -5,10 +5,6 @@
 #include <lolbject/Box.h>
 #include <lolbject/Array.h>
 
-#include "mixin_example/ClassA.h"
-#include "mixin_example/ClassB.h"
-#include "mixin_example/ClassC.h"
-
 #include <stdio.h>
 #include <assert.h>
 
@@ -19,9 +15,9 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	obj_initialize_class(ClassA(), obj_class_a_initializer);
-	obj_initialize_class(ClassB(), obj_class_b_initializer);
-	obj_initialize_class(ClassC(), obj_class_c_initializer);
+	obj_print_class_diagram();
+
+	obj_load_module_from_file("mixin_example/libmixin_example.so");
 
 	obj_print_class_diagram();
 
@@ -46,7 +42,7 @@ int main(int argc, char** argv)
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");
 
-	struct ClassC* c = obj_send_message(obj_send_message(obj_class_with_name("ClassC"), "alloc"), "init");
+	struct Class* c = obj_send_message(obj_send_message(obj_class_with_name("ClassC"), "alloc"), "init");
 
 	obj_send_message(c, "helloFromA");
 	obj_send_message(c, "helloFromB");

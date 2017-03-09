@@ -1,7 +1,6 @@
 #define _DEFAULT_SOURCE 1
 
-#include <lolbject/runtime.h>
-
+#include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -10,6 +9,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include <lolbject/runtime.h>
 #include <lolbject/Class.h>
 #include <lolbject/Object.h>
 #include "Object_Private.h"
@@ -509,4 +509,25 @@ struct LolClass* obj_class_with_name(const char* klassName)
 	}
 
 	return NULL;
+}
+
+void obj_load_module_from_file(const char* filename)
+{
+	void *module = dlopen(filename, RTLD_NOW|RTLD_LOCAL);
+
+	if (module == NULL) {
+		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
+		return;
+	}
+
+	void (*init_module)() = dlsym(module, "init_lol_module");
+
+	if (init_module == NULL) {
+		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
+		return;
+	}
+
+	// FIXME: pass runtime information to the module, so it can decide not to load, for instance
+	// based on compatibility issues
+	init_module();
 }
