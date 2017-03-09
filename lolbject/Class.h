@@ -2,10 +2,10 @@
 
 #include <lolbject/Object.h>
 
-struct Class_Object_Private;
+struct LolClass_Private;
 
-struct Class_Object
+struct LolClass
 {
 	struct Object proto;
-	struct Class_Object_Private* priv;
+	struct LolClass_Private* priv;
 };

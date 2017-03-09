@@ -30,9 +30,9 @@ struct ObjectMembers
 	size_t count;
 };
 
-struct Class_Object_Private
+struct LolClass_Private
 {
-	struct Class_Object* parent;
+	struct LolClass* parent;
 	const char* name;
 	struct ObjectSelectorPair* selectors;
 	struct ObjectPropertyPair* properties;
@@ -44,13 +44,13 @@ struct ObjectPropertyPair
 {
 	const char* name;
 	size_t offset;
-	struct Class_Object* klass;
+	struct LolClass* klass;
 	struct ObjectPropertyPair* next;
 };
 
-static struct Class_Object _Class;
+static struct LolClass _Class;
 
-struct Class_Object* Class()
+struct LolClass* Class()
 {
 	return &_Class;
 }
@@ -65,13 +65,13 @@ struct ObjectSelectorPair
 	struct ObjectSelectorPair* next;
 };
 
-struct Class_Object_List
+struct LolClass_List
 {
-	struct Class_Object* klass;
-	struct Class_Object_List* next;
+	struct LolClass* klass;
+	struct LolClass_List* next;
 };
 
-static struct Class_Object_List* list_of_registred_classes;
+static struct LolClass_List* list_of_registred_classes;
 
 void obj_init_runtime()
 {
@@ -93,7 +93,7 @@ void obj_shutdown_runtime()
 	obj_unload_class(Class());
 
 	// unregister all classes...
-	struct Class_Object_List* tmp;
+	struct LolClass_List* tmp;
 
 	while(list_of_registred_classes != NULL) {
 		tmp = list_of_registred_classes;
@@ -102,11 +102,11 @@ void obj_shutdown_runtime()
 	}
 }
 
-static void print_diagram_for_class(FILE* p, struct Class_Object* klass)
+static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 {
 	fprintf(p, "  class_addr_%lld [\n    label = \"{%s| ", (unsigned long long)klass, klass->priv->name);
 
-	struct Class_Object* typeKlass = klass->proto.klass;
+	struct LolClass* typeKlass = klass->proto.klass;
 
 	if (typeKlass != NULL && klass != Class()) {
 		for (struct ObjectSelectorPair* pair = typeKlass->priv->selectors; pair != NULL; pair = pair->next) {
@@ -135,7 +135,7 @@ static void print_diagram_for_class(FILE* p, struct Class_Object* klass)
 	
 	// Properties
 	for (struct ObjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
-		struct Class_Object* memberClass = pair->klass;	
+		struct LolClass* memberClass = pair->klass;	
 		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back]\n",
 			(unsigned long long)klass,
 			(unsigned long long)memberClass);
@@ -170,7 +170,7 @@ void obj_print_class_diagram()
 "    fontname = \"Bitstream Vera Sans\"\n"
 "    fontsize = 8\n"
 "  ]\n");
-	for (struct Class_Object_List* l = list_of_registred_classes; l != NULL; l = l->next) {
+	for (struct LolClass_List* l = list_of_registred_classes; l != NULL; l = l->next) {
 		print_diagram_for_class(p, l->klass);
 	}
 	fprintf(p, "}\n");
@@ -178,7 +178,7 @@ void obj_print_class_diagram()
 	pclose(p);
 }
 
-void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector)
+void obj_add_selector(struct LolClass* klass, const char* selectorName, obj_selector selector)
 {
 	struct ObjectSelectorPair *pair = malloc(sizeof(struct ObjectSelectorPair));
 	pair->selectorName = selectorName;
@@ -189,15 +189,15 @@ void obj_add_selector(struct Class_Object* klass, const char* selectorName, obj_
 	klass->priv->selectors = pair;
 }
 
-void obj_add_class_selector(struct Class_Object* klass, const char* selectorName, obj_selector selector)
+void obj_add_class_selector(struct LolClass* klass, const char* selectorName, obj_selector selector)
 {
 	obj_add_selector(klass->proto.klass, selectorName, selector);
 }
 
-obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selectorName)
+obj_selector obj_selector_for_name(struct LolClass* klass, const char* selectorName)
 {
 	// NOTE: this is the worst implementation of method lookup ever!
-	for (struct Class_Object* k = klass; k != NULL; k = obj_class_parent(k)) {
+	for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
 		for (struct ObjectSelectorPair* pair = k->priv->selectors; pair != NULL; pair = pair->next) {
 			if (strcmp(pair->selectorName, selectorName) == 0) {
 				return pair->selector;
@@ -208,7 +208,7 @@ obj_selector obj_selector_for_name(struct Class_Object* klass, const char* selec
 	return NULL;
 }
 
-struct Object* obj_self_for_selector(struct Object* obj, struct Class_Object* klass, const char* selectorName)
+struct Object* obj_self_for_selector(struct Object* obj, struct LolClass* klass, const char* selectorName)
 {
 	for (size_t i = 0; i < klass->priv->members.count; i++) {
 		struct ObjectMemberPair pair = klass->priv->members.values[i];
@@ -220,7 +220,7 @@ struct Object* obj_self_for_selector(struct Object* obj, struct Class_Object* kl
 	return obj;
 }
 
-static struct Object* privSendMessageWithArguments(struct Object* obj, struct Class_Object* klass, const char* selectorName, va_list arguments)
+static struct Object* privSendMessageWithArguments(struct Object* obj, struct LolClass* klass, const char* selectorName, va_list arguments)
 {
 	obj_selector selector = obj_selector_for_name(klass, selectorName);
 
@@ -243,7 +243,7 @@ struct Object* obj_send_message_with_arguments(struct Object* obj, const char* s
 
 struct Object* obj_send_message_to_super_with_arguments(struct Object* obj, const char* selectorName, va_list arguments)
 {
-	struct Class_Object* klass = obj_class_parent(obj_class_for_object(obj));
+	struct LolClass* klass = obj_class_parent(obj_class_for_object(obj));
 	return privSendMessageWithArguments(obj, klass, selectorName, arguments);
 }
 
@@ -267,21 +267,21 @@ struct Object* obj_send_message(struct Object* obj, const char* selectorName, ..
 	return result;
 }
 
-void obj_class_initializer(struct Class_Object* klass)
+void obj_class_initializer(struct LolClass* klass)
 {
 	obj_set_class_name(klass, "Class");
 	obj_set_class_parent(klass, NULL);
 }
 
-static void classStaticInitializer(struct Class_Object* klass)
+static void classStaticInitializer(struct LolClass* klass)
 {
 	obj_set_class_parent(klass, Class());
 	obj_set_class_name(klass, NULL);
 }
 
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic);
+static void privInitializeClass(struct LolClass* klass, obj_class_initializer_callback initializer, bool createStatic);
 
-static struct Class_Object* createClassWithStaticMethods(struct Class_Object* klass, bool shouldCreate)
+static struct LolClass* createClassWithStaticMethods(struct LolClass* klass, bool shouldCreate)
 {
 	if (klass == Object()) {
 		return Class();
@@ -291,16 +291,16 @@ static struct Class_Object* createClassWithStaticMethods(struct Class_Object* kl
 		return Object();
 	}
 
-	struct Class_Object* class_with_class_methods = malloc(sizeof(struct Class_Object));
+	struct LolClass* class_with_class_methods = malloc(sizeof(struct LolClass));
 	privInitializeClass(class_with_class_methods, classStaticInitializer, false);
 
 	return class_with_class_methods;
 }
 
-static void privInitializeClass(struct Class_Object* klass, obj_class_initializer_callback initializer, bool createStatic)
+static void privInitializeClass(struct LolClass* klass, obj_class_initializer_callback initializer, bool createStatic)
 {
-	klass->priv = malloc(sizeof(struct Class_Object_Private));
-	memset(klass->priv, 0, sizeof(struct Class_Object_Private));
+	klass->priv = malloc(sizeof(struct LolClass_Private));
+	memset(klass->priv, 0, sizeof(struct LolClass_Private));
 
 	klass->proto.priv = malloc(sizeof(struct Object_Private));
 	memset(klass->proto.priv, 0, sizeof(struct Object_Private));
@@ -314,18 +314,18 @@ static void privInitializeClass(struct Class_Object* klass, obj_class_initialize
 	}
 }
 
-void obj_initialize_class(struct Class_Object* klass, obj_class_initializer_callback initializer)
+void obj_initialize_class(struct LolClass* klass, obj_class_initializer_callback initializer)
 {
 	bool createStatic = klass != Object() && klass != Class();
 	privInitializeClass(klass, initializer, createStatic);
 
-	struct Class_Object_List* l = malloc(sizeof(struct Class_Object_List));
+	struct LolClass_List* l = malloc(sizeof(struct LolClass_List));
 	l->next = list_of_registred_classes;
 	l->klass = klass;
 	list_of_registred_classes = l;
 }
 
-static void deleteClassProperties(struct Class_Object* klass, struct ObjectPropertyPair* pair)
+static void deleteClassProperties(struct LolClass* klass, struct ObjectPropertyPair* pair)
 {
 	// FIXME: a copy of deleteClassSelector
 	struct ObjectPropertyPair* tmp;
@@ -338,7 +338,7 @@ static void deleteClassProperties(struct Class_Object* klass, struct ObjectPrope
 }
 
 
-static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelectorPair* pair)
+static void deleteClassSelector(struct LolClass* klass, struct ObjectSelectorPair* pair)
 {
 	struct ObjectSelectorPair* tmp;
 
@@ -349,7 +349,7 @@ static void deleteClassSelector(struct Class_Object* klass, struct ObjectSelecto
 	}
 }
 
-static void privUnloadClass(struct Class_Object* klass)
+static void privUnloadClass(struct LolClass* klass)
 {
 	deleteClassSelector(klass, klass->priv->selectors);
 	deleteClassProperties(klass, klass->priv->properties);
@@ -366,27 +366,27 @@ static void privUnloadClass(struct Class_Object* klass)
 	free(klass->priv);
 }
 
-void obj_unload_class(struct Class_Object* klass)
+void obj_unload_class(struct LolClass* klass)
 {
 	privUnloadClass(klass);
 }
 
-void obj_set_class_parent(struct Class_Object* klass, struct Class_Object* parent)
+void obj_set_class_parent(struct LolClass* klass, struct LolClass* parent)
 {
 	klass->priv->parent = parent;
 }
 
-void obj_set_class_name(struct Class_Object* klass, const char* name)
+void obj_set_class_name(struct LolClass* klass, const char* name)
 {
 	klass->priv->name = name;
 }
 
-const char* obj_class_name(struct Class_Object* klass)
+const char* obj_class_name(struct LolClass* klass)
 {
 	return klass == NULL ? NULL : klass->priv->name;
 }
 
-struct Class_Object* obj_class_for_object(struct Object* object)
+struct LolClass* obj_class_for_object(struct Object* object)
 {
 	if (object == NULL) {
 		return NULL;
@@ -409,7 +409,7 @@ struct Class_Object* obj_class_for_object(struct Object* object)
 	return object->klass->priv->parent;
 }
 
-struct Class_Object* obj_class_parent(struct Class_Object* klass)
+struct LolClass* obj_class_parent(struct LolClass* klass)
 {
 	return klass == NULL ? NULL : klass->priv->parent;
 }
@@ -439,9 +439,9 @@ bool obj_object_is_class(struct Object* object)
 
 struct Object* obj_get_object_property(struct Object* object, const char* propertyName)
 {
-	struct Class_Object* klass = obj_class_for_object(object);
+	struct LolClass* klass = obj_class_for_object(object);
 
-	for (struct Class_Object* k = klass; k != NULL; k = obj_class_parent(k)) {
+	for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
 		for (struct ObjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
 			if (strcmp(prop->name, propertyName) == 0) {
 				size_t offset = prop->offset;
@@ -455,9 +455,9 @@ struct Object* obj_get_object_property(struct Object* object, const char* proper
 
 struct Object* obj_set_object_property(struct Object* object, const char* propertyName, struct Object* value)
 {
-	struct Class_Object* klass = obj_class_for_object(object);
+	struct LolClass* klass = obj_class_for_object(object);
 
-	for (struct Class_Object* k = klass; k != NULL; k = obj_class_parent(k)) {
+	for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
 		for (struct ObjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
 			if (strcmp(prop->name, propertyName) == 0) {
 				size_t offset = prop->offset;
@@ -472,7 +472,7 @@ struct Object* obj_set_object_property(struct Object* object, const char* proper
 	return object;
 }
 
-void obj_add_property(struct Class_Object* klass, const char* propertyName, struct Class_Object* type, size_t offset)
+void obj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset)
 {
 	// FIXME: code copied from obj_add_selector!!!
 	struct ObjectPropertyPair *pair = malloc(sizeof(struct ObjectPropertyPair));
@@ -485,7 +485,7 @@ void obj_add_property(struct Class_Object* klass, const char* propertyName, stru
 	klass->priv->properties = pair;
 }
 
-void obj_add_selector_from_property(struct Class_Object* klass, struct Class_Object* memberClass, const char* propertyName, const char* selectorName)
+void obj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
 {
 	obj_selector selector = obj_selector_for_name(memberClass, selectorName);
 
@@ -500,9 +500,9 @@ void obj_add_selector_from_property(struct Class_Object* klass, struct Class_Obj
 	obj_add_selector(klass, selectorName, selector);
 }
 
-struct Class_Object* obj_class_with_name(const char* klassName)
+struct LolClass* obj_class_with_name(const char* klassName)
 {
-	for (struct Class_Object_List* l = list_of_registred_classes; l != NULL; l = l->next) {
+	for (struct LolClass_List* l = list_of_registred_classes; l != NULL; l = l->next) {
 		if (strcmp(obj_class_name(l->klass), klassName) == 0) {
 			return l->klass;
 		}

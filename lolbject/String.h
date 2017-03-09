@@ -1,13 +1,12 @@
 #pragma once
 
+#include <lolbject/Class.h>
 #include <lolbject/Object.h>
-
-struct Class_String;
 
 struct String;
 
-struct Class_String* String();
+struct LolClass* String();
 
-void obj_string_initializer(struct Class_String* klass);
+void obj_string_initializer(struct LolClass* klass);
 
 #define STRING(S) obj_send_message(String(), "stringWithString", S)

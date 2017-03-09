@@ -12,9 +12,9 @@ struct Array
 	size_t length;
 };
 
-static struct Class_Object _Array;
+static struct LolClass _Array;
 
-struct Class_Array* Array()
+struct LolClass* Array()
 {
 	return &_Array;
 }
@@ -27,7 +27,7 @@ static struct Object* object_size_selector(struct Object* self, va_list argument
 	return NULL;
 }
 
-static struct Array* array_with_elements_selector(struct Class_Array* self, va_list arguments)
+static struct Array* array_with_elements_selector(struct LolClass* self, va_list arguments)
 {
 	return obj_send_message_with_arguments(obj_send_message(self, "alloc"), "initWithElements", arguments);
 }
@@ -66,7 +66,7 @@ static struct Object* dealloc_selector(struct Array* self, va_list arguments)
 }
 
 
-void obj_array_initializer(struct Class_Array* klass)
+void obj_array_initializer(struct LolClass* klass)
 {
 	obj_set_class_parent(klass, Object());
 	obj_set_class_name(klass, "Array");

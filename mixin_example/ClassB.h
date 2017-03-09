@@ -1,9 +1,9 @@
 #pragma once
 
+#include <lolbject/Class.h>
+
 struct ClassB;
 
-struct Class_ClassB;
+void obj_class_b_initializer(struct LolClass* klass);
 
-void obj_class_b_initializer(struct Class_ClassB* klass);
-
-struct Class_ClassB* ClassB();
+struct LolClass* ClassB();

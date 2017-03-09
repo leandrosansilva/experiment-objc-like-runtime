@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");
 
-	struct ClassC* c = obj_send_message(obj_send_message(ClassC(), "alloc"), "init");
+	struct ClassC* c = obj_send_message(obj_send_message(obj_class_with_name("ClassC"), "alloc"), "init");
 
 	obj_send_message(c, "helloFromA");
 	obj_send_message(c, "helloFromB");

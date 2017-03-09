@@ -2,7 +2,6 @@
 
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
-#include <lolbject/Object.h>
 
 #include <stdio.h>
 
@@ -11,9 +10,9 @@ struct ClassB
 	struct Object super;
 };
 
-static struct Class_Object _ClassB;
+static struct LolClass _ClassB;
 
-struct Class_ClassB* ClassB()
+struct LolClass* ClassB()
 {
 	return &_ClassB;
 }
@@ -32,9 +31,9 @@ static struct ClassB* hello_selector(struct ClassB* self, va_list arguments)
 	return self;
 }
 
-void obj_class_b_initializer(struct Class_ClassB* klass)
+void obj_class_b_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Object());
+	obj_set_class_parent(klass, obj_class_with_name("Object"));
 	obj_set_class_name(klass, "ClassB");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

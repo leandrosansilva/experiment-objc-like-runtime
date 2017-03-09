@@ -2,7 +2,6 @@
 
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
-#include <lolbject/Object.h>
 
 #include "ClassA.h"
 #include "ClassB.h"
@@ -16,9 +15,9 @@ struct ClassC
 	struct ClassB* b;
 };
 
-static struct Class_Object _ClassC;
+static struct LolClass _ClassC;
 
-struct Class_ClassC* ClassC()
+struct LolClass* ClassC()
 {
 	return &_ClassC;
 }
@@ -51,9 +50,9 @@ static struct Object* dealloc_selector(struct ClassC* self, va_list arguments)
 	return self;
 }
 
-void obj_class_c_initializer(struct Class_ClassC* klass)
+void obj_class_c_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Object());
+	obj_set_class_parent(klass, obj_class_with_name("Object"));
 	obj_set_class_name(klass, "ClassC");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

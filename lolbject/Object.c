@@ -11,9 +11,9 @@
 #include <stdio.h>
 #include <string.h>
 
-static struct Class_Object _Object;
+static struct LolClass _Object;
 
-struct Class_Object* Object()
+struct LolClass* Object()
 {
 	return &_Object;
 }
@@ -38,7 +38,7 @@ static struct Object* retain_selector(struct Object* self, va_list arguments)
 	return self;
 }
 
-static struct Object* release_object_selector(struct Class_Object* self, va_list arguments)
+static struct Object* release_object_selector(struct LolClass* self, va_list arguments)
 {
 	struct Object** object = va_arg(arguments, struct Object*);
 
@@ -63,7 +63,7 @@ static struct Object* release_object_selector(struct Class_Object* self, va_list
 	return NULL;
 }
 
-static struct Object* alloc_selector(struct Class_Object* self, va_list arguments)
+static struct Object* alloc_selector(struct LolClass* self, va_list arguments)
 {
 	size_t size = 0;
 
@@ -78,7 +78,7 @@ static struct Object* alloc_selector(struct Class_Object* self, va_list argument
 	struct Object* obj = malloc(size);
 	memset(obj, 0, size);
 
-	obj->klass = (struct Class_Object*)self;
+	obj->klass = (struct LolClass*)self;
 
 	obj->priv = malloc(sizeof(struct Object_Private));
 	obj->priv->tag = obj_runtime_type_object;
@@ -93,7 +93,7 @@ static struct Object* dealloc_selector(struct Object* self, va_list arguments)
 	return NULL;
 }
 
-void obj_object_initializer(struct Class_Object* klass)
+void obj_object_initializer(struct LolClass* klass)
 {
 	obj_set_class_name(klass, "Object");
 	obj_set_class_parent(klass, NULL);

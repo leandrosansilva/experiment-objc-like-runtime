@@ -7,14 +7,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-struct Class_Box
-{
-	struct Class_Object super;
-};
+static struct LolClass _Box;
 
-static struct Class_Box _Box;
-
-struct Class_Box* Box()
+struct LolClass* Box()
 {
 	return &_Box;
 }
@@ -47,7 +42,7 @@ static struct Object* dealloc_selector(struct Box* self, va_list arguments)
 	return NULL;
 }
 
-void obj_box_initializer(struct Class_Box* klass)
+void obj_box_initializer(struct LolClass* klass)
 {
 	obj_set_class_parent(klass, Object());
 	obj_set_class_name(klass, "Box");

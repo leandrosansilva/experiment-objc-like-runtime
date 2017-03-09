@@ -8,20 +8,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Class_String
-{
-	struct Class_Object super;
-};
-
 struct String
 {
 	struct Object super;
 	char* content;
 };
 
-static struct Class_String _String;
+static struct LolClass _String;
 
-struct Class_String* String()
+struct LolClass* String()
 {
 	return &_String;
 }
@@ -77,7 +72,7 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 	return self;
 }
 
-static struct String* string_from_string_selector(struct Class_String* self, va_list arguments)
+static struct String* string_from_string_selector(struct LolClass* self, va_list arguments)
 {
 	return obj_send_message_with_arguments(obj_send_message(self, "alloc"), "initWithString", arguments);
 }
@@ -87,7 +82,7 @@ static struct Box* get_boxed_value(struct String* self, va_list arguments)
 	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", self, self->content);
 }
 
-void obj_string_initializer(struct Class_String* klass)
+void obj_string_initializer(struct LolClass* klass)
 {
 	obj_set_class_parent(klass, Object());
 	obj_set_class_name(klass, "String");
