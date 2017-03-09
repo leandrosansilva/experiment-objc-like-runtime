@@ -1,8 +1,8 @@
-#include "Object.h"
-#include "Class.h"
-#include "runtime.h"
-#include "String.h"
-#include "Number.h"
+#include <lolbject/Object.h>
+#include <lolbject/Class.h>
+#include <lolbject/runtime.h>
+#include <lolbject/String.h>
+#include <lolbject/Number.h>
 
 #include "Object_Private.h"
 

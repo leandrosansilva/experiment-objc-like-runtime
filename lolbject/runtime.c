@@ -1,6 +1,6 @@
 #define _DEFAULT_SOURCE 1
 
-#include "runtime.h"
+#include <lolbject/runtime.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -10,14 +10,14 @@
 #include <assert.h>
 #include <stddef.h>
 
-#include "Class.h"
-#include "Object.h"
+#include <lolbject/Class.h>
+#include <lolbject/Object.h>
 #include "Object_Private.h"
-#include "String.h"
-#include "Number.h"
-#include "Object.h"
-#include "Box.h"
-#include "Array.h"
+#include <lolbject/String.h>
+#include <lolbject/Number.h>
+#include <lolbject/Object.h>
+#include <lolbject/Box.h>
+#include <lolbject/Array.h>
 
 struct ObjectMemberPair {
 	const char* selectorName;

@@ -1,8 +1,8 @@
 #include "ClassA.h"
 
-#include "Class.h"
-#include "runtime.h"
-#include "Object.h"
+#include <lolbject/Class.h>
+#include <lolbject/runtime.h>
+#include <lolbject/Object.h>
 
 #include <stdio.h>
 

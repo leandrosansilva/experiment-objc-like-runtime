@@ -1,13 +1,13 @@
-#include "runtime.h"
-#include "Object.h"
-#include "String.h"
-#include "Number.h"
-#include "Box.h"
-#include "Array.h"
+#include <lolbject/runtime.h>
+#include <lolbject/Object.h>
+#include <lolbject/String.h>
+#include <lolbject/Number.h>
+#include <lolbject/Box.h>
+#include <lolbject/Array.h>
 
-#include "ClassA.h"
-#include "ClassB.h"
-#include "ClassC.h"
+#include "mixin_example/ClassA.h"
+#include "mixin_example/ClassB.h"
+#include "mixin_example/ClassC.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 
 	struct Box* nameValue = obj_send_message(name, "boxedValue");
 
-	struct Object* nameValueCaller = obj_get_object_property(nameValue, "caller");
+	struct Object* nameValueCaller = RETAIN(obj_get_object_property(nameValue, "caller"));
 
 	struct Array* names = obj_send_message(Array(), "arrayWithElements", RETAIN(length), RETAIN(name), String(), NULL);
 
@@ -62,6 +62,7 @@ int main(int argc, char** argv)
 	RELEASE(numberDescription);
 	RELEASE(nameValue);
 	RELEASE(lengthValue);
+	RELEASE(nameValueCaller);
 
 	obj_shutdown_runtime();
 

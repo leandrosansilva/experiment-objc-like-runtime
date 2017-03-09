@@ -1,8 +1,8 @@
-#include "Array.h"
+#include <lolbject/Array.h>
 
-#include "Class.h"
-#include "runtime.h"
-#include "Object.h"
+#include <lolbject/Class.h>
+#include <lolbject/runtime.h>
+#include <lolbject/Object.h>
 
 struct Array
 {

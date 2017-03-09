@@ -1,8 +1,8 @@
-#include "Number.h"
+#include <lolbject/Number.h>
 
-#include "Class.h"
-#include "Box.h"
-#include "runtime.h"
+#include <lolbject/Class.h>
+#include <lolbject/Box.h>
+#include <lolbject/runtime.h>
 
 #include <stdlib.h>
 #include <stdint.h>

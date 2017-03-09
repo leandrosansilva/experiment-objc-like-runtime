@@ -1,7 +1,7 @@
-#include "Box.h"
+#include <lolbject/Box.h>
 
-#include "Class.h"
-#include "runtime.h"
+#include <lolbject/Class.h>
+#include <lolbject/runtime.h>
 
 #include <stdlib.h>
 #include <stdint.h>

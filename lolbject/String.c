@@ -1,9 +1,9 @@
-#include "String.h"
+#include <lolbject/String.h>
 
-#include "Class.h"
-#include "Number.h"
-#include "Box.h"
-#include "runtime.h"
+#include <lolbject/Class.h>
+#include <lolbject/Number.h>
+#include <lolbject/Box.h>
+#include <lolbject/runtime.h>
 
 #include <stdlib.h>
 #include <string.h>

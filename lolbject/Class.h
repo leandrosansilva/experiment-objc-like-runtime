@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Object.h"
+#include <lolbject/Object.h>
 
 struct Class_Object_Private;
 

@@ -18,6 +18,10 @@ add_definitions(
 	#-fsanitize=thread
 )
 
+include_directories(
+	${CMAKE_SOURCE_DIR}
+)
+
 #SET(sanitizer_libs
 #	ubsan
 #	asan
@@ -27,20 +31,13 @@ add_definitions(
 #set(CMAKE_LINKER "clang-3.9")
 #set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
-add_library(
-	object_like
-	STATIC
-	runtime.c
-	Object.c
-	String.c
-	Number.c
-	Box.c
-	Array.c
-	ClassA.c
-	ClassB.c
-	ClassC.c
-	)
+add_subdirectory(lolbject)
+add_subdirectory(mixin_example)
 
 add_executable(main main.c)
 
-target_link_libraries(main object_like ${sanitizer_libs})
+target_link_libraries(main
+	lolbject_core
+	mixin_example
+	${sanitizer_libs}
+)
