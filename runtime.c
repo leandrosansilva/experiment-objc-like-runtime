@@ -1,3 +1,5 @@
+#define _DEFAULT_SOURCE 1
+
 #include "runtime.h"
 
 #include <stdlib.h>
