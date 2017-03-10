@@ -3,6 +3,7 @@
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
 #include <lolbject/Lolbject.h>
+#include <lolbject/Box.h>
 
 struct Array
 {
@@ -65,6 +66,26 @@ static struct Lolbject* dealloc_selector(struct Array* self, va_list arguments)
 	return NULL;
 }
 
+static struct Lobject* get_element_selector(struct Array* self, va_list arguments)
+{
+	// NOTE: takes ownership over the index, making its usage easier
+	// TODO: maybe receive an Index Object instead?
+	struct Number* indexObj = va_arg(arguments, struct Number*);
+	struct Box* indexValue = obj_send_message(indexObj, "boxedValue");
+
+	int index = *((int*)indexValue->value);
+
+	struct Lolbject* result = NULL;
+
+	if (index >= 0 && index < (int)self->length) {
+		result = self->elements[(size_t)index];
+	}
+
+	RELEASE(indexValue);
+	RELEASE(indexObj);
+
+	return result;
+}
 
 void obj_array_initializer(struct LolClass* klass)
 {
@@ -76,4 +97,5 @@ void obj_array_initializer(struct LolClass* klass)
 
 	obj_add_selector(klass, "initWithElements", init_with_elements_selector);
 	obj_add_selector(klass, "dealloc", dealloc_selector);
+	obj_add_selector(klass, "objectAtIndex", get_element_selector);
 }

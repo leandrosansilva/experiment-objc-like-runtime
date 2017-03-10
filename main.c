@@ -31,7 +31,12 @@ int main(int argc, char** argv)
 
 	struct Object* nameValueCaller = RETAIN(obj_get_object_property(nameValue, "caller"));
 
-	struct Array* names = obj_send_message(Array(), "arrayWithElements", RETAIN(length), RETAIN(name), String(), NULL);
+	struct Array* names = ARRAY(RETAIN(length), RETAIN(name), String());
+
+	assert(obj_send_message(names, "objectAtIndex", INT(0)) == length);
+	assert(obj_send_message(names, "objectAtIndex", INT(1)) == name);
+	assert(obj_send_message(names, "objectAtIndex", INT(2)) == String());
+	assert(obj_send_message(names, "objectAtIndex", INT(3)) == NULL);
 
 	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 

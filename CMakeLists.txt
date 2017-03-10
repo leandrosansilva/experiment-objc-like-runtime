@@ -9,7 +9,7 @@ add_definitions(
 	-Wno-unused-parameter
 	-Wno-incompatible-pointer-types
 	-Werror=return-type
-	-std=c99
+	-std=gnu99
 	-fno-omit-frame-pointer
 	-fno-optimize-sibling-calls # disable tail call elimination
 	#-fsanitize=memory
