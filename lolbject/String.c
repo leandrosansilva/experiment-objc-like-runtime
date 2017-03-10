@@ -4,6 +4,7 @@
 #include <lolbject/Number.h>
 #include <lolbject/Box.h>
 #include <lolbject/runtime.h>
+#include <lolbject/macros.h>
 
 #include <stdlib.h>
 #include <string.h>

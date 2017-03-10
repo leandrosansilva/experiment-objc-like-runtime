@@ -73,6 +73,3 @@ void obj_add_property(struct LolClass* klass, const char* propertyName, struct L
 void obj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
 
 struct LolClass* obj_class_with_name(const char* klassName);
-
-#define RETAIN(OBJ) obj_send_message((OBJ), "retain")
-#define RELEASE(OBJ) obj_send_message(obj_class_for_object(OBJ), "release", &OBJ)

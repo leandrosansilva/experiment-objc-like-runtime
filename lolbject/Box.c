@@ -2,6 +2,7 @@
 
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
+#include <lolbject/macros.h>
 
 #include <stdlib.h>
 #include <stdint.h>

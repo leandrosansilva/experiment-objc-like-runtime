@@ -37,6 +37,6 @@ add_subdirectory(mixin_example)
 add_executable(main main.c)
 
 target_link_libraries(main
-	lolbject_core
+	lolbject_runtime
 	${sanitizer_libs}
 )

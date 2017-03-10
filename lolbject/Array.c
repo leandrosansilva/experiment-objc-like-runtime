@@ -4,6 +4,7 @@
 #include <lolbject/runtime.h>
 #include <lolbject/Lolbject.h>
 #include <lolbject/Box.h>
+#include <lolbject/macros.h>
 
 struct Array
 {

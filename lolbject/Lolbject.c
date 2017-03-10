@@ -3,6 +3,7 @@
 #include <lolbject/runtime.h>
 #include <lolbject/String.h>
 #include <lolbject/Number.h>
+#include <lolbject/macros.h>
 
 #include "Lolbject_Private.h"
 

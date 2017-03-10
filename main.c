@@ -4,6 +4,7 @@
 #include <lolbject/Number.h>
 #include <lolbject/Box.h>
 #include <lolbject/Array.h>
+#include <lolbject/macros.h>
 
 #include <stdio.h>
 #include <assert.h>
@@ -17,7 +18,9 @@ int main(int argc, char** argv)
 
 	obj_print_class_diagram();
 
-	obj_load_module_from_file("mixin_example/libmixin_example.so");
+	for (size_t i = 1; i < (size_t)argc; i++) {
+		obj_load_module_from_file(argv[i]);
+	}
 
 	obj_print_class_diagram();
 

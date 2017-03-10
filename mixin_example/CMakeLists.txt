@@ -7,4 +7,4 @@ add_library(
 	module.c
 )
 
-target_link_libraries(mixin_example lolbject_core)
+target_link_libraries(mixin_example lolbject_runtime)
