@@ -16,13 +16,13 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	obj_print_class_diagram();
+	//obj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
 		obj_load_module_from_file(argv[i]);
 	}
 
-	obj_print_class_diagram();
+	//obj_print_class_diagram();
 
 	struct String* name = STRING("Leandro");
 	

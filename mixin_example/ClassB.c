@@ -10,13 +10,6 @@ struct ClassB
 	struct Lolbject super;
 };
 
-static struct LolClass _ClassB;
-
-struct LolClass* ClassB()
-{
-	return &_ClassB;
-}
-
 // Selectors
 static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
 {

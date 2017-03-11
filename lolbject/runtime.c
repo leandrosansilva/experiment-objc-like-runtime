@@ -531,3 +531,12 @@ void obj_load_module_from_file(const char* filename)
 	// based on compatibility issues
 	init_module();
 }
+
+void obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor)
+{
+	struct LolClass* klass = malloc(sizeof(struct LolClass));
+	
+	obj_initialize_class(klass, descriptor->initializer);
+
+	obj_set_class_name(klass, descriptor->name);
+}

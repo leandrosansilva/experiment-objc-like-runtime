@@ -8,20 +8,32 @@
 struct Lolbject;
 struct LolClass;
 
+struct LolClass_Descriptor;
+
+typedef void (*obj_class_initializer_callback)(struct LolClass*);
+typedef void (*obj_class_unloader_callback)(struct LolClass*);
+
 // FIXME: specify properly
 struct Module_Descriptor
 {
-	// pointers to callbacks
 	uint16_t version;
-	void (*init_module)(struct LolClass*);
-	void (*shutdown_module)(struct LolClass*);
+	const char* name;
+	void (*init_module)();
+	void (*shutdown_module)();
+	const struct LolClass_Descriptor* class_descriptors;
+};
+
+struct LolClass_Descriptor
+{
+	const char* name;
+	uint16_t version;
+	obj_class_initializer_callback initializer;
+	obj_class_unloader_callback unloader;
 };
 
 typedef struct Lolbject* (*obj_selector)(struct Lolbject*, va_list);
 
-typedef void (*obj_class_initializer_callback)(struct LolClass*);
-
-void obj_register_class_with_descriptor(struct Module_Descriptor* descriptor);
+void obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor);
 
 void obj_load_module_from_file(const char* filename);
 
