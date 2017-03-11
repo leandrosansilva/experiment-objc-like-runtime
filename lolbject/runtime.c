@@ -68,12 +68,22 @@ struct LolClass_List
 	struct LolClass_List* next;
 };
 
-static struct LolClass_List* list_of_registred_classes;
+struct LolModule_List
+{
+	struct LolModule* module;
+	struct LolModule_List* next;
+};
+
+struct LolModule
+{
+	struct LolModule_Descriptor* descriptor;
+	struct LolClass_List* classes;
+};
+
+static struct LolModule_List* list_of_registred_modules;
 
 void obj_init_runtime()
 {
-	list_of_registred_classes = NULL;
-
 	static struct LolClass_Descriptor classDescriptor = {
 		.name = "Class",
 		.version = 1,
@@ -116,32 +126,52 @@ void obj_init_runtime()
 		.unloader = NULL
 	};
 
-	Class = obj_register_class_with_descriptor(&classDescriptor);
-	Lolbject = obj_register_class_with_descriptor(&objectDescriptor);
-	String = obj_register_class_with_descriptor(&stringDescriptor);
-	Number = obj_register_class_with_descriptor(&numberDescriptor);
-	Box = obj_register_class_with_descriptor(&boxDescriptor);
-	Array = obj_register_class_with_descriptor(&arrayDescriptor);
+	static struct LolModule_Descriptor coreDescriptor = {
+		.version = 1,
+		.name = "core",
+		.init_module = NULL,
+		.shutdown_module = NULL
+	};
+
+	struct LolModule* module = obj_create_module(&coreDescriptor);
+
+	Class = obj_register_class_with_descriptor(module, &classDescriptor);
+	Lolbject = obj_register_class_with_descriptor(module, &objectDescriptor);
+	String = obj_register_class_with_descriptor(module, &stringDescriptor);
+	Number = obj_register_class_with_descriptor(module, &numberDescriptor);
+	Box = obj_register_class_with_descriptor(module, &boxDescriptor);
+	Array = obj_register_class_with_descriptor(module, &arrayDescriptor);
+
+	obj_register_module(module);
 }
 
 void obj_shutdown_runtime()
 {
-	// TODO:
-	// iterate on the modules (careful with dependencies)
-	//   iterate on each class, 
-	//     unload class
-	obj_unload_class(String);
-	obj_unload_class(Number);
-	obj_unload_class(Lolbject);
-	obj_unload_class(Class);
+	for (struct LolModule_List* l = list_of_registred_modules; l != NULL; l = l->next) {
+		for (struct LolClass_List* k = l->module->classes; k != NULL; k = k->next) {
+			obj_unload_class(k->klass);
+			free(k->klass);
+		}
 
-	// unregister all classes...
-	struct LolClass_List* tmp;
+		if (l->module->descriptor->shutdown_module != NULL) {
+			l->module->descriptor->shutdown_module();
+		}
+	}
 
-	while(list_of_registred_classes != NULL) {
-		tmp = list_of_registred_classes;
-		list_of_registred_classes = list_of_registred_classes->next;
-		free(tmp);
+	struct LolModule_List* mtmp;
+
+	// FIXME: as mentioned before, all the list implementation in this code suck
+	// and need to be reimplemented!!!
+	while(list_of_registred_modules != NULL) {
+		mtmp = list_of_registred_modules;
+		struct LolClass_List* ktmp;
+		while (mtmp->module->classes != NULL) {
+			ktmp = mtmp->module->classes; 
+			mtmp->module->classes = mtmp->module->classes->next;
+			//free(mtmp);
+		}
+		list_of_registred_modules = list_of_registred_modules->next;
+		free(mtmp);
 	}
 }
 
@@ -162,7 +192,7 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 	}
 
 	if (klass->priv->properties != NULL) {
-		fprintf(p, "|\n");
+		fprintf(p, "|");
 
 		for (struct LolbjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
 			fprintf(p, "- %s: %s\\l", pair->name, obj_class_name(pair->klass));
@@ -213,8 +243,12 @@ void obj_print_class_diagram()
 "    fontname = \"Bitstream Vera Sans\"\n"
 "    fontsize = 8\n"
 "  ]\n");
-	for (struct LolClass_List* l = list_of_registred_classes; l != NULL; l = l->next) {
-		print_diagram_for_class(p, l->klass);
+	for (struct LolModule_List* m = list_of_registred_modules; m != NULL; m = m->next) {
+		fprintf(p, "subgraph cluster_module_%lld {\nlabel=\"%s\"\n", (unsigned long long)m, m->module->descriptor->name);
+		for (struct LolClass_List* l = m->module->classes; l!= NULL; l = l->next) {
+			print_diagram_for_class(p, l->klass);
+		}
+		fprintf(p, "}\n");
 	}
 	fprintf(p, "}\n");
 
@@ -356,15 +390,10 @@ static void privInitializeClass(struct LolClass* klass, obj_class_initializer_ca
 	}
 }
 
-void obj_initialize_class(struct LolClass* klass, obj_class_initializer_callback initializer)
+static void obj_initialize_class(struct LolClass* klass, obj_class_initializer_callback initializer)
 {
 	bool createStatic = klass != Lolbject && klass != Class;
 	privInitializeClass(klass, initializer, createStatic);
-
-	struct LolClass_List* l = malloc(sizeof(struct LolClass_List));
-	l->next = list_of_registred_classes;
-	l->klass = klass;
-	list_of_registred_classes = l;
 }
 
 static void deleteClassProperties(struct LolClass* klass, struct LolbjectPropertyPair* pair)
@@ -378,7 +407,6 @@ static void deleteClassProperties(struct LolClass* klass, struct LolbjectPropert
 		free(tmp);
 	}
 }
-
 
 static void deleteClassSelector(struct LolClass* klass, struct LolbjectSelectorPair* pair)
 {
@@ -396,155 +424,159 @@ static void privUnloadClass(struct LolClass* klass)
 	deleteClassSelector(klass, klass->priv->selectors);
 	deleteClassProperties(klass, klass->priv->properties);
 
-	if (klass->proto.klass != Class && klass->proto.klass != Lolbject) {
-		deleteClassSelector(klass->proto.klass, klass->proto.klass->priv->selectors);
-		deleteClassProperties(klass->proto.klass, klass->proto.klass->priv->properties);
+		if (klass->proto.klass != Class && klass->proto.klass) {
+			deleteClassSelector(klass->proto.klass, klass->proto.klass->priv->selectors);
+			deleteClassProperties(klass->proto.klass, klass->proto.klass->priv->properties);
 
-		free(klass->proto.klass->proto.priv);
-		free(klass->proto.klass->priv);
+			free(klass->proto.klass->proto.priv);
+			free(klass->proto.klass->priv);
+		}
+
+		free(klass->proto.priv);
+		free(klass->priv);
 	}
 
-	free(klass->proto.priv);
-	free(klass->priv);
-}
+	void obj_unload_class(struct LolClass* klass)
+	{
+		privUnloadClass(klass);
+	}
 
-void obj_unload_class(struct LolClass* klass)
-{
-	privUnloadClass(klass);
-}
+	void obj_set_class_parent(struct LolClass* klass, struct LolClass* parent)
+	{
+		klass->priv->parent = parent;
+	}
 
-void obj_set_class_parent(struct LolClass* klass, struct LolClass* parent)
-{
-	klass->priv->parent = parent;
-}
+	void obj_set_class_name(struct LolClass* klass, const char* name)
+	{
+		klass->priv->name = name;
+	}
 
-void obj_set_class_name(struct LolClass* klass, const char* name)
-{
-	klass->priv->name = name;
-}
+	const char* obj_class_name(struct LolClass* klass)
+	{
+		return klass == NULL ? NULL : klass->priv->name;
+	}
 
-const char* obj_class_name(struct LolClass* klass)
-{
-	return klass == NULL ? NULL : klass->priv->name;
-}
+	struct LolClass* obj_class_for_object(struct Lolbject* object)
+	{
+		if (object == NULL) {
+			return NULL;
+		}
 
-struct LolClass* obj_class_for_object(struct Lolbject* object)
-{
-	if (object == NULL) {
+		if (object->priv->tag == obj_runtime_type_object) {
+			return object->klass;
+		}
+
+		if (object == (struct Lolbject*)Class) {
+			return Lolbject;
+		}
+
+		if (object == (struct Lolbject*)Lolbject) {
+			return Class;
+		}
+
+		assert(object->klass->priv->parent == Class);
+
+		return object->klass->priv->parent;
+	}
+
+	struct LolClass* obj_class_parent(struct LolClass* klass)
+	{
+		return klass == NULL ? NULL : klass->priv->parent;
+	}
+
+	size_t obj_number_of_call_arguments_ending_on_null(va_list arguments)
+	{
+		va_list copy;
+		va_copy(copy, arguments);
+
+		size_t number_of_arguments = 0;
+
+		struct Lolbject* obj = NULL;
+
+		while (obj = va_arg(copy, struct Lolbject*)) {
+			number_of_arguments++;
+		}
+		
+		va_end(copy);
+
+		return number_of_arguments;
+	}
+
+	bool obj_object_is_class(struct Lolbject* object)
+	{
+		return object->priv->tag == obj_runtime_type_class;
+	}
+
+	struct Lolbject* obj_get_object_property(struct Lolbject* object, const char* propertyName)
+	{
+		struct LolClass* klass = obj_class_for_object(object);
+
+		for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
+			for (struct LolbjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
+				if (strcmp(prop->name, propertyName) == 0) {
+					size_t offset = prop->offset;
+					return *(struct Lolbject**)((uint8_t*)object + offset);
+				}
+			}
+		}
+
 		return NULL;
 	}
 
-	if (object->priv->tag == obj_runtime_type_object) {
-		return object->klass;
-	}
+	struct Lolbject* obj_set_object_property(struct Lolbject* object, const char* propertyName, struct Lolbject* value)
+	{
+		struct LolClass* klass = obj_class_for_object(object);
 
-	if (object == (struct Lolbject*)Class) {
-		return Lolbject;
-	}
-
-	if (object == (struct Lolbject*)Lolbject) {
-		return Class;
-	}
-
-	assert(object->klass->priv->parent == Class);
-
-	return object->klass->priv->parent;
-}
-
-struct LolClass* obj_class_parent(struct LolClass* klass)
-{
-	return klass == NULL ? NULL : klass->priv->parent;
-}
-
-size_t obj_number_of_call_arguments_ending_on_null(va_list arguments)
-{
-	va_list copy;
-	va_copy(copy, arguments);
-
-	size_t number_of_arguments = 0;
-
-	struct Lolbject* obj = NULL;
-
-	while (obj = va_arg(copy, struct Lolbject*)) {
-		number_of_arguments++;
-	}
-	
-	va_end(copy);
-
-	return number_of_arguments;
-}
-
-bool obj_object_is_class(struct Lolbject* object)
-{
-	return object->priv->tag == obj_runtime_type_class;
-}
-
-struct Lolbject* obj_get_object_property(struct Lolbject* object, const char* propertyName)
-{
-	struct LolClass* klass = obj_class_for_object(object);
-
-	for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
-		for (struct LolbjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
-			if (strcmp(prop->name, propertyName) == 0) {
-				size_t offset = prop->offset;
-				return *(struct Lolbject**)((uint8_t*)object + offset);
+		for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
+			for (struct LolbjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
+				if (strcmp(prop->name, propertyName) == 0) {
+					size_t offset = prop->offset;
+					*(struct Lolbject**)((uint8_t*)object + offset) = value;
+					return object;
+				}
 			}
 		}
+
+		// TODO: what if the property was not found?
+
+		return object;
 	}
 
-	return NULL;
-}
+	void obj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset)
+	{
+		// FIXME: code copied from obj_add_selector!!!
+		struct LolbjectPropertyPair *pair = malloc(sizeof(struct LolbjectPropertyPair));
+		pair->name = propertyName;
+		pair->offset = offset;
+		pair->klass = type;
 
-struct Lolbject* obj_set_object_property(struct Lolbject* object, const char* propertyName, struct Lolbject* value)
-{
-	struct LolClass* klass = obj_class_for_object(object);
+		// insert at the beginning of the list
+		pair->next = klass->priv->properties;
+		klass->priv->properties = pair;
+	}
 
-	for (struct LolClass* k = klass; k != NULL; k = obj_class_parent(k)) {
-		for (struct LolbjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
-			if (strcmp(prop->name, propertyName) == 0) {
-				size_t offset = prop->offset;
-				*(struct Lolbject**)((uint8_t*)object + offset) = value;
-				return object;
-			}
+	void obj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
+	{
+		obj_selector selector = obj_selector_for_name(memberClass, selectorName);
+
+		if (selector == NULL) {
+			return;
 		}
+
+		klass->priv->members.values[klass->priv->members.count++] = (struct LolbjectMemberPair){
+			.selectorName = selectorName,
+			.propertyName = propertyName};
+
+		obj_add_selector(klass, selectorName, selector);
 	}
 
-	// TODO: what if the property was not found?
+	struct LolClass* obj_class_with_name(struct LolModule* module, const char* klassName)
+	{
+		if (module == NULL) {
+			return NULL;
+		}
 
-	return object;
-}
-
-void obj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset)
-{
-	// FIXME: code copied from obj_add_selector!!!
-	struct LolbjectPropertyPair *pair = malloc(sizeof(struct LolbjectPropertyPair));
-	pair->name = propertyName;
-	pair->offset = offset;
-	pair->klass = type;
-
-	// insert at the beginning of the list
-	pair->next = klass->priv->properties;
-	klass->priv->properties = pair;
-}
-
-void obj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
-{
-	obj_selector selector = obj_selector_for_name(memberClass, selectorName);
-
-	if (selector == NULL) {
-		return;
-	}
-
-	klass->priv->members.values[klass->priv->members.count++] = (struct LolbjectMemberPair){
-		.selectorName = selectorName,
-		.propertyName = propertyName};
-
-	obj_add_selector(klass, selectorName, selector);
-}
-
-struct LolClass* obj_class_with_name(const char* klassName)
-{
-	for (struct LolClass_List* l = list_of_registred_classes; l != NULL; l = l->next) {
+		for (struct LolClass_List* l = module->classes; l != NULL; l = l->next) {
 		if (strcmp(obj_class_name(l->klass), klassName) == 0) {
 			return l->klass;
 		}
@@ -553,33 +585,79 @@ struct LolClass* obj_class_with_name(const char* klassName)
 	return NULL;
 }
 
-void obj_load_module_from_file(const char* filename)
+struct LolModule* obj_load_module_from_file(const char* filename)
 {
 	void *module = dlopen(filename, RTLD_NOW|RTLD_LOCAL);
 
 	if (module == NULL) {
 		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
-		return;
+		return NULL;
 	}
 
-	void (*init_module)() = dlsym(module, "init_lol_module");
+	struct LolModule* (*init_module)() = dlsym(module, "init_lol_module");
 
 	if (init_module == NULL) {
 		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
-		return;
+		return NULL;
 	}
 
 	// FIXME: pass runtime information to the module, so it can decide not to load, for instance
 	// based on compatibility issues
-	init_module();
+	return init_module();
 }
 
-struct LolClass* obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor)
+struct LolClass* obj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor)
 {
 	struct LolClass* klass = malloc(sizeof(struct LolClass));
 
 	obj_initialize_class(klass, descriptor->initializer);
 	obj_set_class_name(klass, descriptor->name);
 
+	struct LolClass_List* l = malloc(sizeof(struct LolClass_List));
+	l->next = module->classes;
+	l->klass = klass;
+	module->classes = l;
+
 	return klass;
+}
+
+struct LolModule* obj_create_module(struct LolModule_Descriptor* descriptor)
+{
+	struct LolModule* module = malloc(sizeof(struct LolModule));
+	memset(module, 0, sizeof(struct LolModule));
+	module->descriptor = descriptor;
+
+	return module;
+}
+
+struct LolModule* obj_module_with_name(const char* name)
+{
+	for (struct LolModule_List* l = list_of_registred_modules; l != NULL; l = l->next) {
+		if (strcmp(l->module->descriptor->name, name) == 0) {
+			return l->module;
+		}
+	}
+
+	return NULL;
+}
+
+struct LolModule* obj_core_module()
+{
+	return obj_module_with_name("core");
+}
+
+void obj_register_module(struct LolModule* module)
+{
+	if (module == NULL) {
+		return;
+	}
+
+	if (module->descriptor->init_module) {
+		module->descriptor->init_module();
+	}
+
+	struct LolModule_List* m = malloc(sizeof(struct LolModule_List));
+	m->next = list_of_registred_modules;
+	m->module = module;
+	list_of_registred_modules = m;
 }

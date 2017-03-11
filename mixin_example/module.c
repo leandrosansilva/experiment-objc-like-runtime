@@ -1,15 +1,13 @@
 #include <lolbject/runtime.h>
-
+#include "module.h"
 #include "ClassA.h"
 #include "ClassB.h"
 #include "ClassC.h"
 
 #include <stdio.h>
 
-void init_lol_module()
+struct LolModule* init_lol_module()
 {	
-	// struct Lol_Module* module = obj_create_module_from_description(description);
-	// and then pass module to the class
 	static struct LolClass_Descriptor classADescriptor = {
 		.name = "ClassA",
 		.version = 1,
@@ -31,7 +29,20 @@ void init_lol_module()
 		.unloader = NULL
 	};
 
-	obj_register_class_with_descriptor(&classADescriptor);
-	obj_register_class_with_descriptor(&classBDescriptor);
-	obj_register_class_with_descriptor(&classCDescriptor);
+	static struct LolModule_Descriptor moduleDescriptor = {
+		.version = 1,
+		.name = "mixin_example",
+		.init_module = NULL,
+		.shutdown_module = NULL
+	};
+
+	struct LolModule* module = obj_create_module(&moduleDescriptor);
+
+	ClassA = obj_register_class_with_descriptor(module, &classADescriptor);
+
+	ClassB = obj_register_class_with_descriptor(module, &classBDescriptor);
+
+	ClassC = obj_register_class_with_descriptor(module, &classCDescriptor);
+
+	return module;
 }

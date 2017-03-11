@@ -26,7 +26,7 @@ static struct ClassB* hello_selector(struct ClassB* self, va_list arguments)
 
 void obj_class_b_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, obj_class_with_name("Lolbject"));
+	obj_set_class_parent(klass, obj_class_with_name(obj_core_module(), "Lolbject"));
 	obj_set_class_name(klass, "ClassB");
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);

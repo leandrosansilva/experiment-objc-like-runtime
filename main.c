@@ -16,11 +16,15 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	obj_print_class_diagram();
+	//obj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
-		obj_load_module_from_file(argv[i]);
-		obj_print_class_diagram();
+		struct LolModule* module = obj_load_module_from_file(argv[i]);
+
+		if (module) {
+			obj_register_module(module);
+			obj_print_class_diagram();
+		}
 	}
 
 	struct String* name = STRING("Leandro");
@@ -49,7 +53,9 @@ int main(int argc, char** argv)
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");
 
-	struct Class* c = obj_send_message(obj_send_message(obj_class_with_name("ClassC"), "alloc"), "init");
+	struct LolModule* mixinExampleModule = obj_module_with_name("mixin_example");
+
+	struct Class* c = obj_send_message(obj_send_message(obj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
 
 	obj_send_message(c, "helloFromA");
 	obj_send_message(c, "helloFromB");

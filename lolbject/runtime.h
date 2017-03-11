@@ -7,6 +7,7 @@
 
 struct Lolbject;
 struct LolClass;
+struct LolModule;
 
 extern struct LolClass* Class;
 
@@ -16,13 +17,12 @@ typedef void (*obj_class_initializer_callback)(struct LolClass*);
 typedef void (*obj_class_unloader_callback)(struct LolClass*);
 
 // FIXME: specify properly
-struct Module_Descriptor
+struct LolModule_Descriptor
 {
 	uint16_t version;
 	const char* name;
 	void (*init_module)();
 	void (*shutdown_module)();
-	const struct LolClass_Descriptor* class_descriptors;
 };
 
 struct LolClass_Descriptor
@@ -35,9 +35,14 @@ struct LolClass_Descriptor
 
 typedef struct Lolbject* (*obj_selector)(struct Lolbject*, va_list);
 
-struct LolClass* obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor);
+struct LolModule* obj_create_module(struct LolModule_Descriptor* descriptor);
 
-void obj_load_module_from_file(const char* filename);
+// What about there was an error registring it?
+void obj_register_module(struct LolModule* module);
+
+struct LolClass* obj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
+
+struct LolModule* obj_load_module_from_file(const char* filename);
 
 void obj_add_selector(struct LolClass* klass, const char* selectorName, obj_selector selector);
 
@@ -58,8 +63,6 @@ void obj_class_initializer(struct LolClass* klass);
 void obj_init_runtime();
 
 void obj_shutdown_runtime();
-
-void obj_initialize_class(struct LolClass* klass, obj_class_initializer_callback initializer);
 
 void obj_print_class_diagram();
 
@@ -84,4 +87,8 @@ void obj_add_property(struct LolClass* klass, const char* propertyName, struct L
 
 void obj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
 
-struct LolClass* obj_class_with_name(const char* klassName);
+struct LolClass* obj_class_with_name(struct LolModule* module, const char* klassName);
+
+struct LolModule* obj_module_with_name(const char* name);
+
+struct LolModule* obj_core_module();

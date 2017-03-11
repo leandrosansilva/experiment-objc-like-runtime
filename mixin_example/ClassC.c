@@ -1,4 +1,5 @@
 #include "ClassC.h"
+#include "module.h"
 
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
@@ -12,9 +13,6 @@ struct ClassC
 	struct ClassA* a;
 	struct ClassB* b;
 };
-
-static struct Lol_Class* ClassA;
-static struct Lol_Class* ClassB;
 
 // Selectors
 static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
@@ -46,17 +44,12 @@ static struct Lolbject* dealloc_selector(struct ClassC* self, va_list arguments)
 
 void obj_class_c_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, obj_class_with_name("Lolbject"));
+	obj_set_class_parent(klass, obj_class_with_name(obj_core_module(), "Lolbject"));
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
 
 	obj_add_selector(klass, "init", init_selector);
 	obj_add_selector(klass, "dealloc", dealloc_selector);
-
-	// TODO: ask to the module, not to the runtime!
-	// as those classes might not yet been registred
-	ClassA = obj_class_with_name("ClassA");
-	ClassB = obj_class_with_name("ClassB");
 
 	obj_add_property(klass, "a", ClassA, offsetof(struct ClassC, a));
 	obj_add_property(klass, "b", ClassB, offsetof(struct ClassC, b));
