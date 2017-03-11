@@ -12,12 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static struct LolClass _Lolbject;
-
-struct LolClass* Lolbject()
-{
-	return &_Lolbject;
-}
+struct LolClass* Lolbject;
 
 static struct String* description_selector(struct Lolbject* self, va_list arguments)
 {
@@ -96,11 +91,11 @@ static struct Lolbject* dealloc_selector(struct Lolbject* self, va_list argument
 
 void obj_object_initializer(struct LolClass* klass)
 {
-	obj_set_class_name(klass, "Lolbject");
 	obj_set_class_parent(klass, NULL);
 
-	obj_add_class_selector(klass, "release", release_object_selector);
-	obj_add_class_selector(klass, "alloc", alloc_selector);
+	// Due some runtime limitations, obj_add_class_selector() cannot be used for Object!!!
+	obj_add_selector(Class, "release", release_object_selector);
+	obj_add_selector(Class, "alloc", alloc_selector);
 
 	obj_add_selector(klass, "description", description_selector);
 	obj_add_selector(klass, "init", init_selector);

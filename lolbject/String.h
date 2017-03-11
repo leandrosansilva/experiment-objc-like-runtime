@@ -5,6 +5,6 @@
 
 struct String;
 
-struct LolClass* String();
+extern struct LolClass* String;
 
 void obj_string_initializer(struct LolClass* klass);

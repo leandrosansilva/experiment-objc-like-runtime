@@ -13,12 +13,7 @@ struct Number
 	int value;
 };
 
-static struct LolClass _Number;
-
-struct LolClass* Number()
-{
-	return &_Number;
-}
+struct LolClass* Number;
 
 // Selectors
 static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
@@ -39,13 +34,12 @@ static struct Number* init_with_integer(struct Number* self, va_list arguments)
 
 static struct Box* get_boxed_value(struct Number* self, va_list arguments)
 {
-	return obj_send_message(obj_send_message(Box(), "alloc"), "initWithValue", self, &self->value);
+	return obj_send_message(obj_send_message(Box, "alloc"), "initWithValue", self, &self->value);
 }
 
 void obj_number_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Lolbject());
-	obj_set_class_name(klass, "Number");
+	obj_set_class_parent(klass, Lolbject);
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
 

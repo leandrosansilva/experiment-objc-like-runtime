@@ -9,6 +9,6 @@ struct Lolbject
 	struct Lolbject_Private* priv;
 };
 
-struct LolClass* Lolbject();
+extern struct LolClass* Lolbject;
 
 void obj_object_initializer(struct LolClass* klass);

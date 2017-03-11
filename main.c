@@ -16,13 +16,12 @@ int main(int argc, char** argv)
 
 	obj_init_runtime();
 
-	//obj_print_class_diagram();
+	obj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
 		obj_load_module_from_file(argv[i]);
+		obj_print_class_diagram();
 	}
-
-	//obj_print_class_diagram();
 
 	struct String* name = STRING("Leandro");
 	
@@ -34,18 +33,18 @@ int main(int argc, char** argv)
 
 	struct Object* nameValueCaller = RETAIN(obj_get_object_property(nameValue, "caller"));
 
-	struct Array* names = ARRAY(RETAIN(length), RETAIN(name), String());
+	struct Array* names = ARRAY(RETAIN(length), RETAIN(name), String);
 
 	assert(obj_send_message(names, "objectAtIndex", INT(0)) == length);
 	assert(obj_send_message(names, "objectAtIndex", INT(1)) == name);
-	assert(obj_send_message(names, "objectAtIndex", INT(2)) == String());
+	assert(obj_send_message(names, "objectAtIndex", INT(2)) == String);
 	assert(obj_send_message(names, "objectAtIndex", INT(3)) == NULL);
 
 	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 
 	struct String* format = STRING("Name: %@, length: %@");
 
-	struct String* formattedString = obj_send_message(obj_send_message(String(), "alloc"), "initWithFormat", format, name, length); 
+	struct String* formattedString = obj_send_message(obj_send_message(String, "alloc"), "initWithFormat", format, name, length); 
 
 	struct String* stringDescription = obj_send_message(name, "description");
 	struct String* numberDescription = obj_send_message(length, "description");

@@ -8,6 +8,8 @@
 struct Lolbject;
 struct LolClass;
 
+extern struct LolClass* Class;
+
 struct LolClass_Descriptor;
 
 typedef void (*obj_class_initializer_callback)(struct LolClass*);
@@ -33,7 +35,7 @@ struct LolClass_Descriptor
 
 typedef struct Lolbject* (*obj_selector)(struct Lolbject*, va_list);
 
-void obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor);
+struct LolClass* obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor);
 
 void obj_load_module_from_file(const char* filename);
 
@@ -50,8 +52,6 @@ struct Lolbject* obj_send_message_with_arguments(struct Lolbject* obj, const cha
 struct Lolbject* obj_send_message_to_super_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
 
 void obj_unload_class(struct LolClass* klass);
-
-struct LolClass* Class();
 
 void obj_class_initializer(struct LolClass* klass);
 

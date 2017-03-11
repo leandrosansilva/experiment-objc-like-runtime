@@ -15,21 +15,21 @@ void init_lol_module()
 		.version = 1,
 		.initializer = obj_class_a_initializer,
 		.unloader = NULL
-	};	
+	};
 
 	static struct LolClass_Descriptor classBDescriptor = {
 		.name = "ClassB",
 		.version = 1,
 		.initializer = obj_class_b_initializer,
 		.unloader = NULL
-	};	
+	};
 
 	static struct LolClass_Descriptor classCDescriptor = {
 		.name = "ClassC",
 		.version = 1,
 		.initializer = obj_class_c_initializer,
 		.unloader = NULL
-	};	
+	};
 
 	obj_register_class_with_descriptor(&classADescriptor);
 	obj_register_class_with_descriptor(&classBDescriptor);

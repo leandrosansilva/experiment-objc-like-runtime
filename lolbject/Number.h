@@ -2,8 +2,6 @@
 
 #include <lolbject/Class.h>
 
-struct Number;
-
 void obj_number_initializer(struct LolClass* klass);
 
-struct LolClass* Number();
+extern struct LolClass* Number;

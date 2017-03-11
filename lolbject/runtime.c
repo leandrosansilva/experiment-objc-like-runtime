@@ -19,6 +19,8 @@
 #include <lolbject/Box.h>
 #include <lolbject/Array.h>
 
+#define XDOT "xdot -"
+
 struct LolbjectMemberPair {
 	const char* selectorName;
 	const char* propertyName;
@@ -48,12 +50,7 @@ struct LolbjectPropertyPair
 	struct LolbjectPropertyPair* next;
 };
 
-static struct LolClass _Class;
-
-struct LolClass* Class()
-{
-	return &_Class;
-}
+struct LolClass* Class;
 
 // NOTE: linked list. No need to say how inefficient it is :-)
 // It should be replaced by an array based (to minimize cache misses) hash map,
@@ -77,20 +74,66 @@ void obj_init_runtime()
 {
 	list_of_registred_classes = NULL;
 
-	obj_initialize_class(Class(), obj_class_initializer);
-	obj_initialize_class(Lolbject(), obj_object_initializer);
-	obj_initialize_class(String(), obj_string_initializer);
-	obj_initialize_class(Number(), obj_number_initializer);
-	obj_initialize_class(Box(), obj_box_initializer);
-	obj_initialize_class(Array(), obj_array_initializer);
+	static struct LolClass_Descriptor classDescriptor = {
+		.name = "Class",
+		.version = 1,
+		.initializer = obj_class_initializer,
+		.unloader = NULL
+	};
+
+	static struct LolClass_Descriptor objectDescriptor = {
+		.name = "Lolbject",
+		.version = 1,
+		.initializer = obj_object_initializer,
+		.unloader = NULL
+	};
+
+	static struct LolClass_Descriptor stringDescriptor = {
+		.name = "String",
+		.version = 1,
+		.initializer = obj_string_initializer,
+		.unloader = NULL
+	};
+
+	static struct LolClass_Descriptor numberDescriptor = {
+		.name = "Number",
+		.version = 1,
+		.initializer = obj_number_initializer,
+		.unloader = NULL
+	};
+
+	static struct LolClass_Descriptor boxDescriptor = {
+		.name = "Box",
+		.version = 1,
+		.initializer = obj_box_initializer,
+		.unloader = NULL
+	};
+
+	static struct LolClass_Descriptor arrayDescriptor = {
+		.name = "Array",
+		.version = 1,
+		.initializer = obj_array_initializer,
+		.unloader = NULL
+	};
+
+	Class = obj_register_class_with_descriptor(&classDescriptor);
+	Lolbject = obj_register_class_with_descriptor(&objectDescriptor);
+	String = obj_register_class_with_descriptor(&stringDescriptor);
+	Number = obj_register_class_with_descriptor(&numberDescriptor);
+	Box = obj_register_class_with_descriptor(&boxDescriptor);
+	Array = obj_register_class_with_descriptor(&arrayDescriptor);
 }
 
 void obj_shutdown_runtime()
 {
-	obj_unload_class(String());
-	obj_unload_class(Number());
-	obj_unload_class(Lolbject());
-	obj_unload_class(Class());
+	// TODO:
+	// iterate on the modules (careful with dependencies)
+	//   iterate on each class, 
+	//     unload class
+	obj_unload_class(String);
+	obj_unload_class(Number);
+	obj_unload_class(Lolbject);
+	obj_unload_class(Class);
 
 	// unregister all classes...
 	struct LolClass_List* tmp;
@@ -108,7 +151,7 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 
 	struct LolClass* typeKlass = klass->proto.klass;
 
-	if (typeKlass != NULL && klass != Class()) {
+	if (typeKlass != NULL && klass != Class) {
 		for (struct LolbjectSelectorPair* pair = typeKlass->priv->selectors; pair != NULL; pair = pair->next) {
 			fprintf(p, "+ %s \\<\\<static\\>\\>\\l", pair->selectorName);
 		}
@@ -151,7 +194,7 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 
 void obj_print_class_diagram()
 {
-	FILE* p = popen("xdot -", "w");
+	FILE* p = popen(XDOT, "w");
 
 	if (p == NULL) {
 		return;
@@ -269,13 +312,12 @@ struct Lolbject* obj_send_message(struct Lolbject* obj, const char* selectorName
 
 void obj_class_initializer(struct LolClass* klass)
 {
-	obj_set_class_name(klass, "Class");
 	obj_set_class_parent(klass, NULL);
 }
 
 static void classStaticInitializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Class());
+	obj_set_class_parent(klass, Class);
 	obj_set_class_name(klass, NULL);
 }
 
@@ -283,12 +325,12 @@ static void privInitializeClass(struct LolClass* klass, obj_class_initializer_ca
 
 static struct LolClass* createClassWithStaticMethods(struct LolClass* klass, bool shouldCreate)
 {
-	if (klass == Lolbject()) {
-		return Class();
+	if (klass == Lolbject) {
+		return Class;
 	}
 
 	if (!shouldCreate) {
-		return Lolbject();
+		return Lolbject;
 	}
 
 	struct LolClass* class_with_class_methods = malloc(sizeof(struct LolClass));
@@ -316,7 +358,7 @@ static void privInitializeClass(struct LolClass* klass, obj_class_initializer_ca
 
 void obj_initialize_class(struct LolClass* klass, obj_class_initializer_callback initializer)
 {
-	bool createStatic = klass != Lolbject() && klass != Class();
+	bool createStatic = klass != Lolbject && klass != Class;
 	privInitializeClass(klass, initializer, createStatic);
 
 	struct LolClass_List* l = malloc(sizeof(struct LolClass_List));
@@ -354,7 +396,7 @@ static void privUnloadClass(struct LolClass* klass)
 	deleteClassSelector(klass, klass->priv->selectors);
 	deleteClassProperties(klass, klass->priv->properties);
 
-	if (klass->proto.klass != Class() && klass->proto.klass != Lolbject()) {
+	if (klass->proto.klass != Class && klass->proto.klass != Lolbject) {
 		deleteClassSelector(klass->proto.klass, klass->proto.klass->priv->selectors);
 		deleteClassProperties(klass->proto.klass, klass->proto.klass->priv->properties);
 
@@ -396,15 +438,15 @@ struct LolClass* obj_class_for_object(struct Lolbject* object)
 		return object->klass;
 	}
 
-	if (object == (struct Lolbject*)Class()) {
-		return Lolbject();
+	if (object == (struct Lolbject*)Class) {
+		return Lolbject;
 	}
 
-	if (object == (struct Lolbject*)Lolbject()) {
-		return Class();
+	if (object == (struct Lolbject*)Lolbject) {
+		return Class;
 	}
 
-	assert(object->klass->priv->parent == Class());
+	assert(object->klass->priv->parent == Class);
 
 	return object->klass->priv->parent;
 }
@@ -532,11 +574,12 @@ void obj_load_module_from_file(const char* filename)
 	init_module();
 }
 
-void obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor)
+struct LolClass* obj_register_class_with_descriptor(struct LolClass_Descriptor *descriptor)
 {
 	struct LolClass* klass = malloc(sizeof(struct LolClass));
-	
-	obj_initialize_class(klass, descriptor->initializer);
 
+	obj_initialize_class(klass, descriptor->initializer);
 	obj_set_class_name(klass, descriptor->name);
+
+	return klass;
 }

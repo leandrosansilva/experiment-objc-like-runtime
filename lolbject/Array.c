@@ -14,12 +14,7 @@ struct Array
 	size_t length;
 };
 
-static struct LolClass _Array;
-
-struct LolClass* Array()
-{
-	return &_Array;
-}
+struct LolClass* Array;
 
 // Selectors
 static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
@@ -90,8 +85,7 @@ static struct Lobject* get_element_selector(struct Array* self, va_list argument
 
 void obj_array_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Lolbject());
-	obj_set_class_name(klass, "Array");
+	obj_set_class_parent(klass, Lolbject);
 
 	obj_add_class_selector(klass, "objectSize", object_size_selector);
 	obj_add_class_selector(klass, "arrayWithElements", array_with_elements_selector);
