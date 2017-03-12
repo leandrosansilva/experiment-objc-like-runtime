@@ -26,21 +26,21 @@ struct LolModule* init_lol_module()
 	static struct LolClass_Descriptor classADescriptor = {
 		.name = "ClassA",
 		.version = 1,
-		.initializer = obj_class_a_initializer,
+		.initializer = lolbj_class_a_initializer,
 		.unloader = NULL
 	};
 
 	static struct LolClass_Descriptor classBDescriptor = {
 		.name = "ClassB",
 		.version = 1,
-		.initializer = obj_class_b_initializer,
+		.initializer = lolbj_class_b_initializer,
 		.unloader = unload_class_b
 	};
 
 	static struct LolClass_Descriptor classCDescriptor = {
 		.name = "ClassC",
 		.version = 1,
-		.initializer = obj_class_c_initializer,
+		.initializer = lolbj_class_c_initializer,
 		.unloader = NULL
 	};
 
@@ -51,13 +51,13 @@ struct LolModule* init_lol_module()
 		.shutdown_module = unload_module
 	};
 
-	struct LolModule* module = obj_create_module(&moduleDescriptor);
+	struct LolModule* module = lolbj_create_module(&moduleDescriptor);
 
-	ClassA = obj_register_class_with_descriptor(module, &classADescriptor);
+	ClassA = lolbj_register_class_with_descriptor(module, &classADescriptor);
 
-	ClassB = obj_register_class_with_descriptor(module, &classBDescriptor);
+	ClassB = lolbj_register_class_with_descriptor(module, &classBDescriptor);
 
-	ClassC = obj_register_class_with_descriptor(module, &classCDescriptor);
+	ClassC = lolbj_register_class_with_descriptor(module, &classCDescriptor);
 
 	return module;
 }

@@ -16,7 +16,7 @@ struct LolClass* Lolbject;
 
 static struct String* description_selector(struct Lolbject* self, va_list arguments)
 {
-	struct String* nameAsDescription = STRING(obj_class_name(obj_class_for_object(self)));
+	struct String* nameAsDescription = STRING(lolbj_class_name(lolbj_class_for_object(self)));
 	return nameAsDescription; // TODO: format like: "Lolbject <address>"
 }
 
@@ -27,7 +27,7 @@ static struct Lolbject* init_selector(struct Lolbject* self, va_list arguments)
 
 static struct Lolbject* retain_selector(struct Lolbject* self, va_list arguments)
 {
-	if (!obj_object_is_class(self)) {
+	if (!lolbj_object_is_class(self)) {
 		self->priv->ref_counter++;
 	}
 
@@ -41,7 +41,7 @@ static struct Lolbject* release_object_selector(struct LolClass* self, va_list a
 	assert(object != NULL);
 	assert(*object != NULL);
 
-	if (obj_object_is_class(*object)) {
+	if (lolbj_object_is_class(*object)) {
 		return NULL;
 	}
 
@@ -50,7 +50,7 @@ static struct Lolbject* release_object_selector(struct LolClass* self, va_list a
 	((*object)->priv->ref_counter)--;
 
 	if (((*object)->priv->ref_counter) == 0) {
-		obj_send_message(*object, "dealloc");
+		lolbj_send_message(*object, "dealloc");
 		free(*object);
 	} 
 
@@ -63,7 +63,7 @@ static struct Lolbject* alloc_selector(struct LolClass* self, va_list arguments)
 {
 	size_t size = 0;
 
-	obj_send_message(self, "objectSize", &size);
+	lolbj_send_message(self, "objectSize", &size);
 
 	if (size == 0) {
 		return NULL;
@@ -77,7 +77,7 @@ static struct Lolbject* alloc_selector(struct LolClass* self, va_list arguments)
 	obj->klass = (struct LolClass*)self;
 
 	obj->priv = malloc(sizeof(struct Lolbject_Private));
-	obj->priv->tag = obj_runtime_type_object;
+	obj->priv->tag = lolbj_runtime_type_object;
 	obj->priv->ref_counter = 1;
 
 	return obj;
@@ -89,16 +89,16 @@ static struct Lolbject* dealloc_selector(struct Lolbject* self, va_list argument
 	return NULL;
 }
 
-void obj_object_initializer(struct LolClass* klass)
+void lolbj_object_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, NULL);
+	lolbj_set_class_parent(klass, NULL);
 
-	// Due some runtime limitations, obj_add_class_selector() cannot be used for Object!!!
-	obj_add_selector(Class, "release", release_object_selector);
-	obj_add_selector(Class, "alloc", alloc_selector);
+	// Due some runtime limitations, lolbj_add_class_selector() cannot be used for Object!!!
+	lolbj_add_selector(Class, "release", release_object_selector);
+	lolbj_add_selector(Class, "alloc", alloc_selector);
 
-	obj_add_selector(klass, "description", description_selector);
-	obj_add_selector(klass, "init", init_selector);
-	obj_add_selector(klass, "dealloc", dealloc_selector);
-	obj_add_selector(klass, "retain", retain_selector);
+	lolbj_add_selector(klass, "description", description_selector);
+	lolbj_add_selector(klass, "init", init_selector);
+	lolbj_add_selector(klass, "dealloc", dealloc_selector);
+	lolbj_add_selector(klass, "retain", retain_selector);
 }

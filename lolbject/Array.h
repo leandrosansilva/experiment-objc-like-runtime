@@ -4,6 +4,6 @@
 
 struct Array;
 
-void obj_array_initializer(struct LolClass* klass);
+void lolbj_array_initializer(struct LolClass* klass);
 
 extern struct LolClass* Array;

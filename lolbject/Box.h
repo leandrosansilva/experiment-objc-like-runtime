@@ -9,6 +9,6 @@ struct Box
 	void* value;
 };
 
-void obj_box_initializer(struct LolClass* klass);
+void lolbj_box_initializer(struct LolClass* klass);
 
 extern struct LolClass* Box;

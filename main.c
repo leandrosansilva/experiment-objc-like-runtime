@@ -14,51 +14,51 @@ int main(int argc, char** argv)
 	(void)argc;
 	(void)argv;
 
-	obj_init_runtime();
+	lolbj_init_runtime();
 
-	//obj_print_class_diagram();
+	//lolbj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
-		struct LolModule* module = obj_load_module_from_file(argv[i]);
+		struct LolModule* module = lolbj_load_module_from_file(argv[i]);
 
 		if (module) {
-			obj_register_module(module);
-			obj_print_class_diagram();
+			lolbj_register_module(module);
+			lolbj_print_class_diagram();
 		}
 	}
 
 	struct String* name = STRING("Leandro");
 	
-	struct Number* length = obj_send_message(name, "length");
+	struct Number* length = lolbj_send_message(name, "length");
 
-	struct Box* lengthValue = obj_send_message(length, "boxedValue");
+	struct Box* lengthValue = lolbj_send_message(length, "boxedValue");
 
-	struct Box* nameValue = obj_send_message(name, "boxedValue");
+	struct Box* nameValue = lolbj_send_message(name, "boxedValue");
 
-	struct Object* nameValueCaller = RETAIN(obj_get_object_property(nameValue, "caller"));
+	struct Object* nameValueCaller = RETAIN(lolbj_get_object_property(nameValue, "caller"));
 
 	struct Array* names = ARRAY(RETAIN(length), RETAIN(name), String);
 
-	assert(obj_send_message(names, "objectAtIndex", INT(0)) == length);
-	assert(obj_send_message(names, "objectAtIndex", INT(1)) == name);
-	assert(obj_send_message(names, "objectAtIndex", INT(2)) == String);
-	assert(obj_send_message(names, "objectAtIndex", INT(3)) == NULL);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(0)) == length);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(1)) == name);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(2)) == String);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(3)) == NULL);
 
 	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 
 	struct String* format = STRING("Name: %@, length: %@");
 
-	struct String* formattedString = obj_send_message(obj_send_message(String, "alloc"), "initWithFormat", format, name, length); 
+	struct String* formattedString = lolbj_send_message(lolbj_send_message(String, "alloc"), "initWithFormat", format, name, length); 
 
-	struct String* stringDescription = obj_send_message(name, "description");
-	struct String* numberDescription = obj_send_message(length, "description");
+	struct String* stringDescription = lolbj_send_message(name, "description");
+	struct String* numberDescription = lolbj_send_message(length, "description");
 
-	struct LolModule* mixinExampleModule = obj_module_with_name("mixin_example");
+	struct LolModule* mixinExampleModule = lolbj_module_with_name("mixin_example");
 
-	struct Class* c = obj_send_message(obj_send_message(obj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
+	struct Class* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
 
-	obj_send_message(c, "helloFromA");
-	obj_send_message(c, "helloFromB");
+	lolbj_send_message(c, "helloFromA");
+	lolbj_send_message(c, "helloFromB");
 
 	RELEASE(c);
 
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 	RELEASE(lengthValue);
 	RELEASE(nameValueCaller);
 
-	obj_shutdown_runtime();
+	lolbj_shutdown_runtime();
 
 	return 0;
 }

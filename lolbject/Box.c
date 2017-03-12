@@ -20,9 +20,9 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct Box* init_with_value(struct Box* self, va_list arguments)
 {
-	if (self = obj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, "init")) {
 		struct Lolbject* caller = va_arg(arguments, struct Lolbject*);
-		obj_set_object_property(self, "caller", RETAIN(caller));
+		lolbj_set_object_property(self, "caller", RETAIN(caller));
 
 		void* value = va_arg(arguments, void*);
 		self->value = value;
@@ -34,18 +34,18 @@ static struct Box* init_with_value(struct Box* self, va_list arguments)
 static struct Lolbject* dealloc_selector(struct Box* self, va_list arguments)
 {
 	RELEASE(self->caller);
-	obj_send_message_to_super(self, "dealloc");
+	lolbj_send_message_to_super(self, "dealloc");
 	return NULL;
 }
 
-void obj_box_initializer(struct LolClass* klass)
+void lolbj_box_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Lolbject);
+	lolbj_set_class_parent(klass, Lolbject);
 
-	obj_add_class_selector(klass, "objectSize", object_size_selector);
+	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 
-	obj_add_selector(klass, "initWithValue", init_with_value);
-	obj_add_selector(klass, "dealloc", dealloc_selector);
+	lolbj_add_selector(klass, "initWithValue", init_with_value);
+	lolbj_add_selector(klass, "dealloc", dealloc_selector);
 
-	obj_add_property(klass, "caller", Lolbject, offsetof(struct Box, caller));
+	lolbj_add_property(klass, "caller", Lolbject, offsetof(struct Box, caller));
 }

@@ -25,7 +25,7 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct Number* init_with_integer(struct Number* self, va_list arguments)
 {
-	if (self = obj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, "init")) {
 		self->value = va_arg(arguments, int);
 	}
 
@@ -34,15 +34,15 @@ static struct Number* init_with_integer(struct Number* self, va_list arguments)
 
 static struct Box* get_boxed_value(struct Number* self, va_list arguments)
 {
-	return obj_send_message(obj_send_message(Box, "alloc"), "initWithValue", self, &self->value);
+	return lolbj_send_message(lolbj_send_message(Box, "alloc"), "initWithValue", self, &self->value);
 }
 
-void obj_number_initializer(struct LolClass* klass)
+void lolbj_number_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Lolbject);
+	lolbj_set_class_parent(klass, Lolbject);
 
-	obj_add_class_selector(klass, "objectSize", object_size_selector);
+	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 
-	obj_add_selector(klass, "initWithInt", init_with_integer);
-	obj_add_selector(klass, "boxedValue", get_boxed_value);
+	lolbj_add_selector(klass, "initWithInt", init_with_integer);
+	lolbj_add_selector(klass, "boxedValue", get_boxed_value);
 }

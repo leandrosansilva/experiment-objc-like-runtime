@@ -26,13 +26,13 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct Array* array_with_elements_selector(struct LolClass* self, va_list arguments)
 {
-	return obj_send_message_with_arguments(obj_send_message(self, "alloc"), "initWithElements", arguments);
+	return lolbj_send_message_with_arguments(lolbj_send_message(self, "alloc"), "initWithElements", arguments);
 }
 
 static struct Array* init_with_elements_selector(struct Array* self, va_list arguments)
 {
-	if (self = obj_send_message_to_super(self, "init")) {
-		size_t number_of_arguments = obj_number_of_call_arguments_ending_on_null(arguments);
+	if (self = lolbj_send_message_to_super(self, "init")) {
+		size_t number_of_arguments = lolbj_number_of_call_arguments_ending_on_null(arguments);
 
 		self->capacity = number_of_arguments;
 		self->length = number_of_arguments;
@@ -57,7 +57,7 @@ static struct Lolbject* dealloc_selector(struct Array* self, va_list arguments)
 		free(self->elements);
 	}
 
-	obj_send_message_to_super(self, "dealloc");
+	lolbj_send_message_to_super(self, "dealloc");
 
 	return NULL;
 }
@@ -67,7 +67,7 @@ static struct Lobject* get_element_selector(struct Array* self, va_list argument
 	// NOTE: takes ownership over the index, making its usage easier
 	// TODO: maybe receive an Index Object instead?
 	struct Number* indexObj = va_arg(arguments, struct Number*);
-	struct Box* indexValue = obj_send_message(indexObj, "boxedValue");
+	struct Box* indexValue = lolbj_send_message(indexObj, "boxedValue");
 
 	int index = *((int*)indexValue->value);
 
@@ -83,14 +83,14 @@ static struct Lobject* get_element_selector(struct Array* self, va_list argument
 	return result;
 }
 
-void obj_array_initializer(struct LolClass* klass)
+void lolbj_array_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Lolbject);
+	lolbj_set_class_parent(klass, Lolbject);
 
-	obj_add_class_selector(klass, "objectSize", object_size_selector);
-	obj_add_class_selector(klass, "arrayWithElements", array_with_elements_selector);
+	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
+	lolbj_add_class_selector(klass, "arrayWithElements", array_with_elements_selector);
 
-	obj_add_selector(klass, "initWithElements", init_with_elements_selector);
-	obj_add_selector(klass, "dealloc", dealloc_selector);
-	obj_add_selector(klass, "objectAtIndex", get_element_selector);
+	lolbj_add_selector(klass, "initWithElements", init_with_elements_selector);
+	lolbj_add_selector(klass, "dealloc", dealloc_selector);
+	lolbj_add_selector(klass, "objectAtIndex", get_element_selector);
 }

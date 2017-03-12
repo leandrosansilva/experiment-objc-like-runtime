@@ -13,8 +13,8 @@ extern struct LolClass* Class;
 
 struct LolClass_Descriptor;
 
-typedef void (*obj_class_initializer_callback)(struct LolClass*);
-typedef void (*obj_class_unloader_callback)(struct LolClass*);
+typedef void (*lolbj_class_initializer_callback)(struct LolClass*);
+typedef void (*lolbj_class_unloader_callback)(struct LolClass*);
 
 struct LolModule_Descriptor
 {
@@ -28,66 +28,66 @@ struct LolClass_Descriptor
 {
 	const char* name;
 	uint16_t version;
-	obj_class_initializer_callback initializer;
-	obj_class_unloader_callback unloader;
+	lolbj_class_initializer_callback initializer;
+	lolbj_class_unloader_callback unloader;
 };
 
-typedef struct Lolbject* (*obj_selector)(struct Lolbject*, va_list);
+typedef struct Lolbject* (*lolbj_selector)(struct Lolbject*, va_list);
 
-struct LolModule* obj_create_module(struct LolModule_Descriptor* descriptor);
+struct LolModule* lolbj_create_module(struct LolModule_Descriptor* descriptor);
 
 // What about there was an error registring it?
-void obj_register_module(struct LolModule* module);
+void lolbj_register_module(struct LolModule* module);
 
-struct LolClass* obj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
+struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
 
-struct LolModule* obj_load_module_from_file(const char* filename);
+struct LolModule* lolbj_load_module_from_file(const char* filename);
 
-void obj_add_selector(struct LolClass* klass, const char* selectorName, obj_selector selector);
+void lolbj_add_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector);
 
-void obj_add_class_selector(struct LolClass* klass, const char* selectorName, obj_selector selector);
+void lolbj_add_class_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector);
 
-obj_selector obj_selector_for_name(struct LolClass* klass, const char* selectorName);
+lolbj_selector lolbj_selector_for_name(struct LolClass* klass, const char* selectorName);
 
-struct Lolbject* obj_send_message(struct Lolbject* obj, const char* selectorName, ...);
-struct Lolbject* obj_send_message_to_super(struct Lolbject* obj, const char* selectorName, ...);
+struct Lolbject* lolbj_send_message(struct Lolbject* obj, const char* selectorName, ...);
+struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, const char* selectorName, ...);
 
-struct Lolbject* obj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
-struct Lolbject* obj_send_message_to_super_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
+struct Lolbject* lolbj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
+struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
 
-void obj_unload_class(struct LolClass* klass);
+void lolbj_unload_class(struct LolClass* klass);
 
-void obj_class_initializer(struct LolClass* klass);
+void lolbj_class_initializer(struct LolClass* klass);
 
-void obj_init_runtime();
+void lolbj_init_runtime();
 
-void obj_shutdown_runtime();
+void lolbj_shutdown_runtime();
 
-void obj_print_class_diagram();
+void lolbj_print_class_diagram();
 
-void obj_set_class_parent(struct LolClass* klass, struct LolClass* parent);
+void lolbj_set_class_parent(struct LolClass* klass, struct LolClass* parent);
 
-struct LolClass* obj_class_parent(struct LolClass* klass);
+struct LolClass* lolbj_class_parent(struct LolClass* klass);
 
-void obj_set_class_name(struct LolClass* klass, const char* name);
+void lolbj_set_class_name(struct LolClass* klass, const char* name);
 
-const char* obj_class_name(struct LolClass* klass);
+const char* lolbj_class_name(struct LolClass* klass);
 
-struct LolClass* obj_class_for_object(struct Lolbject* object);
+struct LolClass* lolbj_class_for_object(struct Lolbject* object);
 
-size_t obj_number_of_call_arguments_ending_on_null(va_list arguments);
+size_t lolbj_number_of_call_arguments_ending_on_null(va_list arguments);
 
-bool obj_object_is_class(struct Lolbject* object);
+bool lolbj_object_is_class(struct Lolbject* object);
 
-struct Lolbject* obj_get_object_property(struct Lolbject* object, const char* propertyName);
-struct Lolbject* obj_set_object_property(struct Lolbject* object, const char* propertyName, struct Lolbject* value);
+struct Lolbject* lolbj_get_object_property(struct Lolbject* object, const char* propertyName);
+struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* propertyName, struct Lolbject* value);
 
-void obj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset);
+void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset);
 
-void obj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
+void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
 
-struct LolClass* obj_class_with_name(struct LolModule* module, const char* klassName);
+struct LolClass* lolbj_class_with_name(struct LolModule* module, const char* klassName);
 
-struct LolModule* obj_module_with_name(const char* name);
+struct LolModule* lolbj_module_with_name(const char* name);
 
-struct LolModule* obj_core_module();
+struct LolModule* lolbj_core_module();

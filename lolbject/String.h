@@ -7,4 +7,4 @@ struct String;
 
 extern struct LolClass* String;
 
-void obj_string_initializer(struct LolClass* klass);
+void lolbj_string_initializer(struct LolClass* klass);

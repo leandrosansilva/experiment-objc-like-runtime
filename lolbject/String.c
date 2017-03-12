@@ -36,7 +36,7 @@ static struct Lolbject* string_dealloc_selector(struct String* self, va_list arg
 		free(self->content);
 	}
 
-	obj_send_message_to_super(self, "dealloc");
+	lolbj_send_message_to_super(self, "dealloc");
 
 	return NULL;
 }
@@ -49,7 +49,7 @@ static struct String* description_selector(struct String* self, va_list argument
 
 static struct String* string_init_with_format_selector(struct String* self, va_list arguments)
 {
-	if (self = obj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, "init")) {
 		// TODO: implement!
 	}
 
@@ -58,7 +58,7 @@ static struct String* string_init_with_format_selector(struct String* self, va_l
 
 static struct String* string_init_with_string_selector(struct String* self, va_list arguments)
 {
-	if (self = obj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, "init")) {
 		char* string = va_arg(arguments, char*);
 		self->content = malloc(strlen(string) + 1);
 		strcpy(self->content, string);
@@ -69,25 +69,25 @@ static struct String* string_init_with_string_selector(struct String* self, va_l
 
 static struct String* string_from_string_selector(struct LolClass* self, va_list arguments)
 {
-	return obj_send_message_with_arguments(obj_send_message(self, "alloc"), "initWithString", arguments);
+	return lolbj_send_message_with_arguments(lolbj_send_message(self, "alloc"), "initWithString", arguments);
 }
 
 static struct Box* get_boxed_value(struct String* self, va_list arguments)
 {
-	return obj_send_message(obj_send_message(Box, "alloc"), "initWithValue", self, self->content);
+	return lolbj_send_message(lolbj_send_message(Box, "alloc"), "initWithValue", self, self->content);
 }
 
-void obj_string_initializer(struct LolClass* klass)
+void lolbj_string_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, Lolbject);
+	lolbj_set_class_parent(klass, Lolbject);
 
-	obj_add_class_selector(klass, "objectSize", object_size_selector);
-	obj_add_class_selector(klass, "stringWithString", string_from_string_selector);
+	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
+	lolbj_add_class_selector(klass, "stringWithString", string_from_string_selector);
 
-	obj_add_selector(klass, "length", string_length_selector);
-	obj_add_selector(klass, "description", description_selector);
-	obj_add_selector(klass, "dealloc", string_dealloc_selector);
-	obj_add_selector(klass, "initWithFormat", string_init_with_format_selector);
-	obj_add_selector(klass, "initWithString", string_init_with_string_selector);
-	obj_add_selector(klass, "boxedValue", get_boxed_value);
+	lolbj_add_selector(klass, "length", string_length_selector);
+	lolbj_add_selector(klass, "description", description_selector);
+	lolbj_add_selector(klass, "dealloc", string_dealloc_selector);
+	lolbj_add_selector(klass, "initWithFormat", string_init_with_format_selector);
+	lolbj_add_selector(klass, "initWithString", string_init_with_string_selector);
+	lolbj_add_selector(klass, "boxedValue", get_boxed_value);
 }

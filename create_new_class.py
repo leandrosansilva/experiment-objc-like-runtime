@@ -26,7 +26,7 @@ struct ${class_name};
 
 struct Class_${class_name};
 
-void obj_${class_name_snakecase}_initializer(struct Class_${class_name}* klass);
+void lolbj_${class_name_snakecase}_initializer(struct Class_${class_name}* klass);
 
 struct Class_${class_name}* ${class_name}();
 """
@@ -59,21 +59,21 @@ static struct Object* object_size_selector(struct Object* self, va_list argument
 
 static struct ${class_name}* init_selector(struct ${class_name}* self, va_list arguments)
 {
-	if (self = obj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, "init")) {
 	    // Initialize Members
 	}
 
 	return self;
 }
 
-void obj_${class_name_snakecase}_initializer(struct Class_${class_name}* klass)
+void lolbj_${class_name_snakecase}_initializer(struct Class_${class_name}* klass)
 {
-	obj_set_class_parent(klass, ${parent_class_name}());
-	obj_set_class_name(klass, "${class_name}");
+	lolbj_set_class_parent(klass, ${parent_class_name}());
+	lolbj_set_class_name(klass, "${class_name}");
 
-	obj_add_class_selector(klass, "objectSize", object_size_selector);
+	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 
-	obj_add_selector(klass, "init", init_selector);
+	lolbj_add_selector(klass, "init", init_selector);
 }
 """
 

@@ -11,4 +11,4 @@ struct Lolbject
 
 extern struct LolClass* Lolbject;
 
-void obj_object_initializer(struct LolClass* klass);
+void lolbj_object_initializer(struct LolClass* klass);

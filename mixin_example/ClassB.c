@@ -20,16 +20,16 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct ClassB* hello_selector(struct ClassB* self, va_list arguments)
 {
-	printf("Hello World from B which is of type '%s'\n", obj_class_name(obj_class_for_object(self)));
+	printf("Hello World from B which is of type '%s'\n", lolbj_class_name(lolbj_class_for_object(self)));
 	return self;
 }
 
-void obj_class_b_initializer(struct LolClass* klass)
+void lolbj_class_b_initializer(struct LolClass* klass)
 {
-	obj_set_class_parent(klass, obj_class_with_name(obj_core_module(), "Lolbject"));
-	obj_set_class_name(klass, "ClassB");
+	lolbj_set_class_parent(klass, lolbj_class_with_name(lolbj_core_module(), "Lolbject"));
+	lolbj_set_class_name(klass, "ClassB");
 
-	obj_add_class_selector(klass, "objectSize", object_size_selector);
+	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 
-	obj_add_selector(klass, "helloFromB", hello_selector);
+	lolbj_add_selector(klass, "helloFromB", hello_selector);
 }
