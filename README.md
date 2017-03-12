@@ -35,4 +35,4 @@ TODO: document how to use it and how things look like.
 WHY?
 * Because I was curious to learn how the ObjC runtime works, since I have worked with it for a few months now.
 
-PS: I am still mostly a C++ programmer, but confess have not had programmed on it a lot recently.
+PS: I am still mostly a C++ programmer, but confess have not used it a lot recently.
