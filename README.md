@@ -1,24 +1,38 @@
-# experiment-objc-like-runtime
-Pet project - objective-c like runtime in pure C
+# LOLbject - a Objective-c like runtime for C
 
-TL;DR -> experiments with message passing based object oriented "DSL" in C.
+TL;DR -> experiments with message passing based object oriented framework in C.
 
-This is not really a "project", but some experiments I started in a sunny weekend [1] when I had another anxiety crisis and could not leave home (but you really did not need to know that). So why not, instead of just watch series on Netflix, do some useless programming?
+NOTE: This is a toy project, not intended for production. The prefix LOL means that. Does not take is seriously.
+The idea is that evetything will be done in runtime, including type checking, message passing, etc.
+Yes, this is bad for performance and counter-intuitive, but people have been using similar for decades (ObjC)
+and I am trying to understand how they did that, as I still do not thing this scales well.
 
-I hate when people say "I am a $programming_language_X programmer". I think this is rather too limiting. Good programmers are just programmers; the programming language is just a tool.
+Features:
 
-But as I am not a good programmer, I would consider myself a C++ programmer, as it's my "mother tongue" that I have used professionally for most of my career.
+* dynamic loading of modules
 
-Awkwardly in my current job I work essentially with Objective-C, something I had never used before (specially because I had never really touched a Mac before the job interview), which has a implementation of OO quite different from C++, even though both are "C like" languages.
+* dynamic dispatching
 
-Every obj-c programmer knows this language is basically C with some syntax sugar to enable the message passing approach.
+* class diagram generation during runtime
 
-It's a very interesting concept, even though condemned to be slow, as most optimizations and error checking that could be done in compile time cannot be done as (almost) everything is done in runtime.
+* Mixins and Inheritance
 
-So I thought "why not try to implement it on my own, just for fun?", so I maybe could learn something and understand why some things in obj-c behave like they do.
+* Properties
 
-No, I did not read the objc specification, so this code is uniquely based on my ideas at the moment I was writing it. Something like "how can solve this problem?", which turns out to create another problem and so on.
+Planned Features:
+* Hot update (deploy new modules and updates without stop the running application)
 
-Mental note: this is not a propper README.
+* Classes extensions (categories)
 
-[1] It's not a sunny weekend in a tropical Brazilian summer that no one cares about, where I come from, but in a cold Bavarian winter.
+* Safe cast -> ```if (struct Number* n = lolbj_cast(Number, obj)) {do something with n}```
+
+* Meta programming -> 
+
+* Introspection and Reflection
+
+TODO: document how to use it and how things look like.
+
+WHY?
+* Because I was curious to learn how the ObjC runtime works, since I have worked with it for a few months now.
+
+PS: I am still mostly a C++ programmer, but confess have not had programmed on it a lot recently.
