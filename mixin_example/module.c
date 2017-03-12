@@ -6,6 +6,21 @@
 
 #include <stdio.h>
 
+void load_module(struct LolModule* module)
+{
+	printf("loading module Mixin Example!\n");
+}
+
+void unload_module(struct LolModule* module)
+{
+	printf("unloading module Mixin Example!\n");
+}
+
+void unload_class_b(struct LolClass* klass)
+{
+	printf("unloading ClassB!\n");
+}
+
 struct LolModule* init_lol_module()
 {	
 	static struct LolClass_Descriptor classADescriptor = {
@@ -19,7 +34,7 @@ struct LolModule* init_lol_module()
 		.name = "ClassB",
 		.version = 1,
 		.initializer = obj_class_b_initializer,
-		.unloader = NULL
+		.unloader = unload_class_b
 	};
 
 	static struct LolClass_Descriptor classCDescriptor = {
@@ -32,8 +47,8 @@ struct LolModule* init_lol_module()
 	static struct LolModule_Descriptor moduleDescriptor = {
 		.version = 1,
 		.name = "mixin_example",
-		.init_module = NULL,
-		.shutdown_module = NULL
+		.init_module = load_module,
+		.shutdown_module = unload_module
 	};
 
 	struct LolModule* module = obj_create_module(&moduleDescriptor);

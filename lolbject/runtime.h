@@ -16,13 +16,12 @@ struct LolClass_Descriptor;
 typedef void (*obj_class_initializer_callback)(struct LolClass*);
 typedef void (*obj_class_unloader_callback)(struct LolClass*);
 
-// FIXME: specify properly
 struct LolModule_Descriptor
 {
 	uint16_t version;
 	const char* name;
-	void (*init_module)();
-	void (*shutdown_module)();
+	void (*init_module)(struct LolModule*);
+	void (*shutdown_module)(struct LolClass*);
 };
 
 struct LolClass_Descriptor

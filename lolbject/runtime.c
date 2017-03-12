@@ -39,6 +39,7 @@ struct LolClass_Private
 	struct LolbjectSelectorPair* selectors;
 	struct LolbjectPropertyPair* properties;
 	struct LolbjectMembers members;
+	struct LolClass_Descriptor* descriptor;
 };
 
 // NOTE: the property list is also a linked list.
@@ -78,6 +79,7 @@ struct LolModule
 {
 	struct LolModule_Descriptor* descriptor;
 	struct LolClass_List classes;
+	void* handler;
 };
 
 static struct LolModule_List registred_modules;
@@ -155,6 +157,10 @@ void obj_shutdown_runtime()
 	for (size_t i = 0; i < registred_modules.size; i++) {
 		struct LolModule* module = registred_modules.modules[i];
 
+		if (module->descriptor->shutdown_module != NULL) {
+			module->descriptor->shutdown_module(module);
+		}
+
 		for (size_t j = 0; j < module->classes.size; j++) {
 			void (*unload_class)(struct LolClass*) = module->classes.classes[j] == Class 
 				? privUnloadClassClass
@@ -164,8 +170,10 @@ void obj_shutdown_runtime()
 			module->classes.classes[j] = NULL;
 		}
 
-		if (module->descriptor->shutdown_module != NULL) {
-			module->descriptor->shutdown_module();
+		if (module->handler != NULL) {
+			if (dlclose(module->handler) != 0) {
+				printf("Error closing module %s: %s\n", module->descriptor->name, dlerror());
+			}
 		}
 
 		free(registred_modules.modules[i]);
@@ -411,6 +419,10 @@ static void deleteClassSelector(struct LolClass* klass, struct LolbjectSelectorP
 
 static void privUnloadClass(struct LolClass* klass, bool ownStaticClass)
 {
+	if (klass->priv->descriptor != NULL && klass->priv->descriptor->unloader != NULL) {
+		klass->priv->descriptor->unloader(klass);
+	}
+
 	deleteClassSelector(klass, klass->priv->selectors);
 	deleteClassProperties(klass, klass->priv->properties);
 
@@ -585,23 +597,27 @@ struct LolClass* obj_class_with_name(struct LolModule* module, const char* klass
 
 struct LolModule* obj_load_module_from_file(const char* filename)
 {
-	void *module = dlopen(filename, RTLD_NOW|RTLD_LOCAL);
+	void *handler = dlopen(filename, RTLD_NOW|RTLD_LOCAL);
 
-	if (module == NULL) {
+	if (handler == NULL) {
 		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
 		return NULL;
 	}
 
-	struct LolModule* (*init_module)() = dlsym(module, "init_lol_module");
+	struct LolModule* (*init_module)() = dlsym(handler, "init_lol_module");
 
 	if (init_module == NULL) {
 		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
+		dlclose(handler);
 		return NULL;
 	}
 
 	// FIXME: pass runtime information to the module, so it can decide not to load, for instance
 	// based on compatibility issues
-	return init_module();
+	struct LolModule* module = init_module();
+	module->handler = handler;
+
+	return module;
 }
 
 static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass)
@@ -610,6 +626,8 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 
 	privInitializeClass(klass, descriptor->initializer, isNormalClass);
 	obj_set_class_name(klass, descriptor->name);
+
+	klass->priv->descriptor = descriptor;
 
 	module->classes.classes[module->classes.size++] = klass;
 
@@ -654,7 +672,7 @@ void obj_register_module(struct LolModule* module)
 	}
 
 	if (module->descriptor->init_module) {
-		module->descriptor->init_module();
+		module->descriptor->init_module(module);
 	}
 
 	registred_modules.modules[registred_modules.size++] = module;
