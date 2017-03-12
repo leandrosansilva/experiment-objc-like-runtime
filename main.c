@@ -60,6 +60,12 @@ int main(int argc, char** argv)
 	lolbj_send_message(c, "helloFromA");
 	lolbj_send_message(c, "helloFromB");
 
+	assert(lolbj_cast(Lolbject, format) == format);
+	assert(lolbj_cast(Number, format) == NULL);
+	assert(lolbj_cast(Number, NULL) == NULL);
+	assert(lolbj_cast(NULL, format) == format);
+	assert(lolbj_cast(NULL, NULL) == NULL);
+
 	RELEASE(c);
 
 	RELEASE(format);

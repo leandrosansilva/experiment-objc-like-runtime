@@ -677,3 +677,12 @@ void lolbj_register_module(struct LolModule* module)
 
 	registred_modules.modules[registred_modules.size++] = module;
 }
+
+struct Lolbject* lolbj_cast(struct LolClass* klass, struct Lolbject* obj)
+{
+	struct LolClass* k = lolbj_class_for_object(obj);
+
+	for (; k != NULL && k != klass; k = k->priv->parent) {}
+
+	return k == klass ? obj : NULL;
+}
