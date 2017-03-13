@@ -32,11 +32,22 @@ struct LolbjectMembers
 	size_t count;
 };
 
+struct SelectorPair {
+	const char* name;
+	lolbj_selector selector;
+};
+
+struct LolbjectSelectors
+{
+	struct SelectorPair selectors[1024];
+	size_t size;
+};
+
 struct LolClass_Private
 {
 	struct LolClass* parent;
 	const char* name;
-	struct LolbjectSelectorPair* selectors;
+	struct LolbjectSelectors selectors;
 	struct LolbjectPropertyPair* properties;
 	struct LolbjectMembers members;
 	struct LolClass_Descriptor* descriptor;
@@ -52,16 +63,6 @@ struct LolbjectPropertyPair
 };
 
 struct LolClass* Class;
-
-// NOTE: linked list. No need to say how inefficient it is :-)
-// It should be replaced by an array based (to minimize cache misses) hash map,
-// but who cares?
-struct LolbjectSelectorPair
-{
-	const char* selectorName;
-	lolbj_selector selector;
-	struct LolbjectSelectorPair* next;
-};
 
 struct LolClass_List
 {
@@ -188,13 +189,13 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 	struct LolClass* typeKlass = klass->proto.klass;
 
 	if (typeKlass != NULL && klass != Class) {
-		for (struct LolbjectSelectorPair* pair = typeKlass->priv->selectors; pair != NULL; pair = pair->next) {
-			fprintf(p, "+ %s \\<\\<static\\>\\>\\l", pair->selectorName);
+		for (size_t i = 0; i < typeKlass->priv->selectors.size; i++) {
+			fprintf(p, "+ %s \\<\\<static\\>\\>\\l", typeKlass->priv->selectors.selectors[i].name);
 		}
 	}
 
-	for (struct LolbjectSelectorPair* pair = klass->priv->selectors; pair != NULL; pair = pair->next) {
-		fprintf(p, "+ %s\\l", pair->selectorName);
+	for (size_t i = 0; i < klass->priv->selectors.size; i++) {
+		fprintf(p, "+ %s\\l", klass->priv->selectors.selectors[i].name);
 	}
 
 	if (klass->priv->properties != NULL) {
@@ -265,13 +266,10 @@ void lolbj_print_class_diagram()
 
 void lolbj_add_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector)
 {
-	struct LolbjectSelectorPair *pair = malloc(sizeof(struct LolbjectSelectorPair));
-	pair->selectorName = selectorName;
-	pair->selector = selector;
-
-	// insert at the beginning of the list
-	pair->next = klass->priv->selectors;
-	klass->priv->selectors = pair;
+	klass->priv->selectors.selectors[klass->priv->selectors.size++] = (struct SelectorPair){
+		.name = selectorName,
+		.selector = selector
+	};
 }
 
 void lolbj_add_class_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector)
@@ -283,9 +281,10 @@ lolbj_selector lolbj_selector_for_name(struct LolClass* klass, const char* selec
 {
 	// NOTE: this is the worst implementation of method lookup ever!
 	for (struct LolClass* k = klass; k != NULL; k = lolbj_class_parent(k)) {
-		for (struct LolbjectSelectorPair* pair = k->priv->selectors; pair != NULL; pair = pair->next) {
-			if (strcmp(pair->selectorName, selectorName) == 0) {
-				return pair->selector;
+		for (size_t i = 0; i < k->priv->selectors.size; i++) {
+			struct SelectorPair pair = k->priv->selectors.selectors[i];
+			if (strcmp(pair.name, selectorName) == 0) {
+				return pair.selector;
 			}
 		}
 	}
@@ -387,7 +386,6 @@ static void privInitializeClass(struct LolClass* klass, lolbj_class_initializer_
 
 	klass->proto.priv->tag = lolbj_runtime_type_class;
 	klass->proto.klass = createClassWithStaticMethods(klass, createStatic);
-	klass->priv->selectors = NULL;
 
 	if (initializer != NULL) {
 		initializer(klass);
@@ -406,24 +404,12 @@ static void deleteClassProperties(struct LolClass* klass, struct LolbjectPropert
 	}
 }
 
-static void deleteClassSelector(struct LolClass* klass, struct LolbjectSelectorPair* pair)
-{
-	struct LolbjectSelectorPair* tmp;
-
-	while(pair != NULL) {
-		tmp = pair;
-		pair = pair->next;
-		free(tmp);
-	}
-}
-
 static void privUnloadClass(struct LolClass* klass, bool ownStaticClass)
 {
 	if (klass->priv->descriptor != NULL && klass->priv->descriptor->unloader != NULL) {
 		klass->priv->descriptor->unloader(klass);
 	}
 
-	deleteClassSelector(klass, klass->priv->selectors);
 	deleteClassProperties(klass, klass->priv->properties);
 
 	if (ownStaticClass) {
