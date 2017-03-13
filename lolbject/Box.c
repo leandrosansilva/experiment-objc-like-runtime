@@ -20,7 +20,7 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct Box* init_with_value(struct Box* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, Box, "init")) {
 		struct Lolbject* caller = va_arg(arguments, struct Lolbject*);
 		lolbj_set_object_property(self, "caller", RETAIN(caller));
 
@@ -34,7 +34,7 @@ static struct Box* init_with_value(struct Box* self, va_list arguments)
 static struct Lolbject* dealloc_selector(struct Box* self, va_list arguments)
 {
 	RELEASE(self->caller);
-	lolbj_send_message_to_super(self, "dealloc");
+	lolbj_send_message_to_super(self, Box, "dealloc");
 	return NULL;
 }
 

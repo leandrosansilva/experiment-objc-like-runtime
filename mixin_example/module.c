@@ -1,8 +1,5 @@
 #include <lolbject/runtime.h>
 #include "module.h"
-#include "ClassA.h"
-#include "ClassB.h"
-#include "ClassC.h"
 
 #include <stdio.h>
 
@@ -44,6 +41,13 @@ struct LolModule* init_lol_module()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor classDDescriptor = {
+		.name = "ClassD",
+		.version = 1,
+		.initializer = lolbj_class_d_initializer,
+		.unloader = NULL
+	};
+
 	static struct LolModule_Descriptor moduleDescriptor = {
 		.version = 1,
 		.name = "mixin_example",
@@ -51,13 +55,15 @@ struct LolModule* init_lol_module()
 		.shutdown_module = unload_module
 	};
 
-	struct LolModule* module = lolbj_create_module(&moduleDescriptor);
+	mixin_module = lolbj_create_module(&moduleDescriptor);
 
-	ClassA = lolbj_register_class_with_descriptor(module, &classADescriptor);
+	ClassA = lolbj_register_class_with_descriptor(mixin_module, &classADescriptor);
 
-	ClassB = lolbj_register_class_with_descriptor(module, &classBDescriptor);
+	ClassB = lolbj_register_class_with_descriptor(mixin_module, &classBDescriptor);
 
-	ClassC = lolbj_register_class_with_descriptor(module, &classCDescriptor);
+	ClassC = lolbj_register_class_with_descriptor(mixin_module, &classCDescriptor);
 
-	return module;
+	ClassD = lolbj_register_class_with_descriptor(mixin_module, &classDDescriptor);
+
+	return mixin_module;
 }

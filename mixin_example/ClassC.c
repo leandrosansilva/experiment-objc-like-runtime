@@ -1,18 +1,11 @@
-#include "ClassC.h"
 #include "module.h"
+#include "ClassC.h"
 
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
 #include <lolbject/macros.h>
 
 #include <stddef.h>
-
-struct ClassC
-{
-	struct Lolbject super;
-	struct ClassA* a;
-	struct ClassB* b;
-};
 
 // Selectors
 static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
@@ -24,7 +17,7 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct ClassC* init_selector(struct ClassC* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, ClassC, "init")) {
 		lolbj_set_object_property(self, "a", lolbj_send_message(lolbj_send_message(ClassA, "alloc"), "init"));
 		lolbj_set_object_property(self, "b", lolbj_send_message(lolbj_send_message(ClassB, "alloc"), "init"));
 	}
@@ -37,9 +30,7 @@ static struct Lolbject* dealloc_selector(struct ClassC* self, va_list arguments)
 	RELEASE(self->a);
 	RELEASE(self->b);
 
-	lolbj_send_message_to_super(self, "dealloc");
-
-	return self;
+	return lolbj_send_message_to_super(self, ClassC, "dealloc");
 }
 
 void lolbj_class_c_initializer(struct LolClass* klass)

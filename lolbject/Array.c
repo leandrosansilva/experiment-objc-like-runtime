@@ -31,7 +31,7 @@ static struct Array* array_with_elements_selector(struct LolClass* self, va_list
 
 static struct Array* init_with_elements_selector(struct Array* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, Array, "init")) {
 		size_t number_of_arguments = lolbj_number_of_call_arguments_ending_on_null(arguments);
 
 		self->capacity = number_of_arguments;
@@ -57,7 +57,7 @@ static struct Lolbject* dealloc_selector(struct Array* self, va_list arguments)
 		free(self->elements);
 	}
 
-	lolbj_send_message_to_super(self, "dealloc");
+	lolbj_send_message_to_super(self, Array, "dealloc");
 
 	return NULL;
 }

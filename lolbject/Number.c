@@ -25,7 +25,7 @@ static struct Lolbject* object_size_selector(struct Lolbject* self, va_list argu
 
 static struct Number* init_with_integer(struct Number* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, Number, "init")) {
 		self->value = va_arg(arguments, int);
 	}
 

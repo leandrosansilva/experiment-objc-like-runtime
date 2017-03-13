@@ -50,10 +50,10 @@ void lolbj_add_class_selector(struct LolClass* klass, const char* selectorName, 
 lolbj_selector lolbj_selector_for_name(struct LolClass* klass, const char* selectorName);
 
 struct Lolbject* lolbj_send_message(struct Lolbject* obj, const char* selectorName, ...);
-struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, const char* selectorName, ...);
+struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, ...);
 
 struct Lolbject* lolbj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
-struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
+struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, va_list arguments);
 
 void lolbj_unload_class(struct LolClass* klass);
 

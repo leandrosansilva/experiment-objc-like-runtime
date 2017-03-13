@@ -326,17 +326,17 @@ struct Lolbject* lolbj_send_message_with_arguments(struct Lolbject* obj, const c
 	return privSendMessageWithArguments(obj, obj ? obj->klass : NULL, selectorName, arguments);
 }
 
-struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments)
+struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, va_list arguments)
 {
-	struct LolClass* klass = lolbj_class_parent(lolbj_class_for_object(obj));
-	return privSendMessageWithArguments(obj, klass, selectorName, arguments);
+	struct LolClass* parentClass = lolbj_class_parent(klass);
+	return privSendMessageWithArguments(obj, parentClass, selectorName, arguments);
 }
 
-struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, const char* selectorName, ...)
+struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, ...)
 {
 	va_list arguments;
 	va_start(arguments, selectorName);
-	struct Lolbject* result = lolbj_send_message_to_super_with_arguments(obj, selectorName, arguments);
+	struct Lolbject* result = lolbj_send_message_to_super_with_arguments(obj, klass, selectorName, arguments);
 	va_end(arguments);
 
 	return result;

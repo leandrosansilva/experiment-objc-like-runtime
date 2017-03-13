@@ -55,10 +55,16 @@ int main(int argc, char** argv)
 
 	struct LolModule* mixinExampleModule = lolbj_module_with_name("mixin_example");
 
-	struct Class* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
+	struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
+
+
+	struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassD"), "alloc"), "initWithName", STRING("Lalalala"));
 
 	lolbj_send_message(c, "helloFromA");
 	lolbj_send_message(c, "helloFromB");
+
+	// must be the implementation in D
+	lolbj_send_message(d, "helloFromA");
 
 	assert(lolbj_cast(Lolbject, format) == format);
 	assert(lolbj_cast(Number, format) == NULL);
@@ -67,6 +73,7 @@ int main(int argc, char** argv)
 	assert(lolbj_cast(NULL, NULL) == NULL);
 
 	RELEASE(c);
+	RELEASE(d);
 
 	RELEASE(format);
 	RELEASE(name);

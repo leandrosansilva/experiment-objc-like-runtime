@@ -1,5 +1,10 @@
 #pragma once
 
-#include <lolbject/Class.h>
+#include <lolbject/Lolbject.h>
 
-void lolbj_class_c_initializer(struct LolClass* klass);
+struct ClassC
+{
+	struct Lolbject super;
+	struct ClassA* a;
+	struct ClassB* b;
+};

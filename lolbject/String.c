@@ -36,7 +36,7 @@ static struct Lolbject* string_dealloc_selector(struct String* self, va_list arg
 		free(self->content);
 	}
 
-	lolbj_send_message_to_super(self, "dealloc");
+	lolbj_send_message_to_super(self, String, "dealloc");
 
 	return NULL;
 }
@@ -49,7 +49,7 @@ static struct String* description_selector(struct String* self, va_list argument
 
 static struct String* string_init_with_format_selector(struct String* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, String, "init")) {
 		// TODO: implement!
 	}
 
@@ -58,7 +58,7 @@ static struct String* string_init_with_format_selector(struct String* self, va_l
 
 static struct String* string_init_with_string_selector(struct String* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, "init")) {
+	if (self = lolbj_send_message_to_super(self, String, "init")) {
 		char* string = va_arg(arguments, char*);
 		self->content = malloc(strlen(string) + 1);
 		strcpy(self->content, string);

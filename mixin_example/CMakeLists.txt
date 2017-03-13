@@ -4,6 +4,7 @@ add_library(
 	ClassA.c
 	ClassB.c
 	ClassC.c
+	ClassD.c
 	module.c
 )
 

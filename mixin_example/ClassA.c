@@ -1,5 +1,3 @@
-#include "ClassA.h"
-
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
 
