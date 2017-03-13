@@ -33,22 +33,26 @@ struct LolbjectSelectors
 	size_t size;
 };
 
-struct LolClass_Private
-{
-	struct LolClass* parent;
-	const char* name;
-	struct LolbjectSelectors selectors;
-	struct LolbjectPropertyPair* properties;
-	struct LolClass_Descriptor* descriptor;
-};
-
-// NOTE: the property list is also a linked list.
 struct LolbjectPropertyPair
 {
 	const char* name;
 	size_t offset;
 	struct LolClass* klass;
-	struct LolbjectPropertyPair* next;
+};
+
+struct LolbjectProperties
+{
+	size_t size;
+	struct LolbjectPropertyPair properties[2014];
+};
+
+struct LolClass_Private
+{
+	struct LolClass* parent;
+	const char* name;
+	struct LolbjectSelectors selectors;
+	struct LolbjectProperties properties;
+	struct LolClass_Descriptor* descriptor;
 };
 
 struct LolClass* Class;
@@ -191,11 +195,12 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 		fprintf(p, "+ %s\\l", klass->priv->selectors.selectors[i].name);
 	}
 
-	if (klass->priv->properties != NULL) {
+	if (klass->priv->properties.size > 0) {
 		fprintf(p, "|");
 
-		for (struct LolbjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
-			fprintf(p, "- %s: %s\\l", pair->name, lolbj_class_name(pair->klass));
+		for (size_t i = 0; i < klass->priv->properties.size; i++) {
+			fprintf(p, "- %s: %s\\l", klass->priv->properties.properties[i].name,
+					lolbj_class_name(klass->priv->properties.properties[i].klass));
 		}
 	}
 
@@ -206,9 +211,8 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 			(unsigned long long)klass,
 			(unsigned long long)lolbj_class_for_object(klass));
 	
-	// Properties
-	for (struct LolbjectPropertyPair* pair = klass->priv->properties; pair != NULL; pair = pair->next) {
-		struct LolClass* memberClass = pair->klass;	
+	for (size_t i = 0; i < klass->priv->properties.size; i++) {
+		struct LolClass* memberClass = klass->priv->properties.properties[i].klass;	
 		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back]\n",
 			(unsigned long long)klass,
 			(unsigned long long)memberClass);
@@ -384,25 +388,11 @@ static void privInitializeClass(struct LolClass* klass, lolbj_class_initializer_
 	}
 }
 
-static void deleteClassProperties(struct LolClass* klass, struct LolbjectPropertyPair* pair)
-{
-	// FIXME: a copy of deleteClassSelector
-	struct LolbjectPropertyPair* tmp;
-
-	while(pair != NULL) {
-		tmp = pair;
-		pair = pair->next;
-		free(tmp);
-	}
-}
-
 static void privUnloadClass(struct LolClass* klass, bool ownStaticClass)
 {
 	if (klass->priv->descriptor != NULL && klass->priv->descriptor->unloader != NULL) {
 		klass->priv->descriptor->unloader(klass);
 	}
-
-	deleteClassProperties(klass, klass->priv->properties);
 
 	if (ownStaticClass) {
 		privUnloadClass(klass->proto.klass, false);
@@ -500,9 +490,10 @@ struct Lolbject* lolbj_get_object_property(struct Lolbject* object, const char* 
 	struct LolClass* klass = lolbj_class_for_object(object);
 
 	for (struct LolClass* k = klass; k != NULL; k = lolbj_class_parent(k)) {
-		for (struct LolbjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
-			if (strcmp(prop->name, propertyName) == 0) {
-				size_t offset = prop->offset;
+		for (size_t i = 0; i < k->priv->properties.size; i++) {
+			struct LolbjectPropertyPair pair = k->priv->properties.properties[i];
+			if (strcmp(pair.name, propertyName) == 0) {
+				size_t offset = pair.offset;
 				return *(struct Lolbject**)((uint8_t*)object + offset);
 			}
 		}
@@ -516,9 +507,10 @@ struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* 
 	struct LolClass* klass = lolbj_class_for_object(object);
 
 	for (struct LolClass* k = klass; k != NULL; k = lolbj_class_parent(k)) {
-		for (struct LolbjectPropertyPair* prop = k->priv->properties; prop != NULL; prop = prop->next) {
-			if (strcmp(prop->name, propertyName) == 0) {
-				size_t offset = prop->offset;
+		for (size_t i = 0; i < k->priv->properties.size; i++) {
+			struct LolbjectPropertyPair pair = k->priv->properties.properties[i];
+			if (strcmp(pair.name, propertyName) == 0) {
+				size_t offset = pair.offset;
 				*(struct Lolbject**)((uint8_t*)object + offset) = value;
 				return object;
 			}
@@ -532,15 +524,11 @@ struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* 
 
 void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset)
 {
-	// FIXME: code copied from lolbj_add_selector!!!
-	struct LolbjectPropertyPair *pair = malloc(sizeof(struct LolbjectPropertyPair));
-	pair->name = propertyName;
-	pair->offset = offset;
-	pair->klass = type;
-
-	// insert at the beginning of the list
-	pair->next = klass->priv->properties;
-	klass->priv->properties = pair;
+	klass->priv->properties.properties[klass->priv->properties.size++] = (struct LolbjectPropertyPair){
+		.name = propertyName,
+		.offset = offset,
+		.klass = type
+	};
 }
 
 void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
