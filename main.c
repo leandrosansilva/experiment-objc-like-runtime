@@ -53,27 +53,31 @@ int main(int argc, char** argv)
 	struct String* stringDescription = lolbj_send_message(name, "description");
 	struct String* numberDescription = lolbj_send_message(length, "description");
 
-	struct LolModule* mixinExampleModule = lolbj_module_with_name("mixin_example");
+	struct LolModule* mixinExampleModule;
+	
+	if (mixinExampleModule = lolbj_load_module_from_file("./mixin_example/libmixin_example.so")) {
+		struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
 
-	struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
 
+		struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassD"), "alloc"), "initWithName", STRING("Lalalala"));
 
-	struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassD"), "alloc"), "initWithName", STRING("Lalalala"));
+		lolbj_send_message(c, "helloFromA");
+		lolbj_send_message(c, "helloFromB");
 
-	lolbj_send_message(c, "helloFromA");
-	lolbj_send_message(c, "helloFromB");
+		// must be the implementation in D
+		lolbj_send_message(d, "helloFromA");
 
-	// must be the implementation in D
-	lolbj_send_message(d, "helloFromA");
+		assert(lolbj_cast(Lolbject, format) == format);
+		assert(lolbj_cast(Number, format) == NULL);
+		assert(lolbj_cast(Number, NULL) == NULL);
+		assert(lolbj_cast(NULL, format) == format);
+		assert(lolbj_cast(NULL, NULL) == NULL);
 
-	assert(lolbj_cast(Lolbject, format) == format);
-	assert(lolbj_cast(Number, format) == NULL);
-	assert(lolbj_cast(Number, NULL) == NULL);
-	assert(lolbj_cast(NULL, format) == format);
-	assert(lolbj_cast(NULL, NULL) == NULL);
+		RELEASE(c);
+		RELEASE(d);
 
-	RELEASE(c);
-	RELEASE(d);
+		lolbj_unload_module(mixinExampleModule);
+	}
 
 	RELEASE(format);
 	RELEASE(name);

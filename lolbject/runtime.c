@@ -153,31 +153,35 @@ void lolbj_init_runtime()
 static void privUnloadNormalClass(struct LolClass* klass);
 static void privUnloadClassClass(struct LolClass* klass);
 
+void lolbj_unload_module(struct LolModule* module)
+{
+	if (module->descriptor->shutdown_module != NULL) {
+		module->descriptor->shutdown_module(module);
+	}
+
+	for (size_t j = 0; j < module->classes.size; j++) {
+		void (*unload_class)(struct LolClass*) = module->classes.classes[j] == Class 
+			? privUnloadClassClass
+			: privUnloadNormalClass;
+
+		unload_class(module->classes.classes[j]);
+		module->classes.classes[j] = NULL;
+	}
+
+	if (module->handler != NULL) {
+		if (dlclose(module->handler) != 0) {
+			printf("Error closing module %s: %s\n", module->descriptor->name, dlerror());
+		}
+	}
+
+	free(module);
+}
+
 void lolbj_shutdown_runtime()
 {
 	for (size_t i = 0; i < registred_modules.size; i++) {
 		struct LolModule* module = registred_modules.modules[i];
-
-		if (module->descriptor->shutdown_module != NULL) {
-			module->descriptor->shutdown_module(module);
-		}
-
-		for (size_t j = 0; j < module->classes.size; j++) {
-			void (*unload_class)(struct LolClass*) = module->classes.classes[j] == Class 
-				? privUnloadClassClass
-				: privUnloadNormalClass;
-
-			unload_class(module->classes.classes[j]);
-			module->classes.classes[j] = NULL;
-		}
-
-		if (module->handler != NULL) {
-			if (dlclose(module->handler) != 0) {
-				printf("Error closing module %s: %s\n", module->descriptor->name, dlerror());
-			}
-		}
-
-		free(registred_modules.modules[i]);
+		lolbj_unload_module(module);
 		registred_modules.modules[i] = NULL;
 	}
 }

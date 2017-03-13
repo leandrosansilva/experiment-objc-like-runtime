@@ -93,3 +93,5 @@ struct LolModule* lolbj_module_with_name(const char* name);
 struct LolModule* lolbj_core_module();
 
 struct Lolbject* lolbj_cast(struct LolClass* klass, struct Lolbject* obj);
+
+void lolbj_unload_module(struct LolModule* module);
