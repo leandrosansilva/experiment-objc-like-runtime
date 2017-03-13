@@ -21,19 +21,9 @@
 
 #define XDOT "xdot -"
 
-struct LolbjectMemberPair {
-	const char* selectorName;
-	const char* propertyName;
-}; 
-
-struct LolbjectMembers
-{
-	struct LolbjectMemberPair values[1024];
-	size_t count;
-};
-
 struct SelectorPair {
-	const char* name;
+	const char* name; // TODO: do not use pointers, but contiguous memory
+	const char* propertyName; // property name used as "self", or null
 	lolbj_selector selector;
 };
 
@@ -49,7 +39,6 @@ struct LolClass_Private
 	const char* name;
 	struct LolbjectSelectors selectors;
 	struct LolbjectPropertyPair* properties;
-	struct LolbjectMembers members;
 	struct LolClass_Descriptor* descriptor;
 };
 
@@ -268,12 +257,18 @@ void lolbj_print_class_diagram()
 	pclose(p);
 }
 
-void lolbj_add_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector)
+static void privAddSelector(struct LolClass* klass, const char* selectorName, const char* propertyName, lolbj_selector selector)
 {
 	klass->priv->selectors.selectors[klass->priv->selectors.size++] = (struct SelectorPair){
 		.name = selectorName,
-		.selector = selector
+		.selector = selector,
+		.propertyName = propertyName
 	};
+}
+
+void lolbj_add_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector)
+{
+	privAddSelector(klass, selectorName, NULL, selector);
 }
 
 void lolbj_add_class_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector)
@@ -281,45 +276,38 @@ void lolbj_add_class_selector(struct LolClass* klass, const char* selectorName, 
 	lolbj_add_selector(klass->proto.klass, selectorName, selector);
 }
 
-lolbj_selector lolbj_selector_for_name(struct LolClass* klass, const char* selectorName)
+static struct SelectorPair privSelectorPairForSelectorName(struct LolClass* klass, const char* selectorName)
 {
 	// NOTE: this is the worst implementation of method lookup ever!
 	for (struct LolClass* k = klass; k != NULL; k = lolbj_class_parent(k)) {
 		for (size_t i = 0; i < k->priv->selectors.size; i++) {
 			struct SelectorPair pair = k->priv->selectors.selectors[i];
 			if (strcmp(pair.name, selectorName) == 0) {
-				return pair.selector;
+				return pair;
 			}
 		}
 	}
 
-	return NULL;
+	return (struct SelectorPair){.name = NULL, .propertyName = NULL, .selector = NULL};
 }
 
-struct Lolbject* lolbj_self_for_selector(struct Lolbject* obj, struct LolClass* klass, const char* selectorName)
+lolbj_selector lolbj_selector_for_name(struct LolClass* klass, const char* selectorName)
 {
-	for (size_t i = 0; i < klass->priv->members.count; i++) {
-		struct LolbjectMemberPair pair = klass->priv->members.values[i];
-		if (strcmp(pair.selectorName, selectorName) == 0) {
-			return lolbj_get_object_property(obj, pair.propertyName);
-		}
-	}
-
-	return obj;
+	return privSelectorPairForSelectorName(klass, selectorName).selector;
 }
 
 static struct Lolbject* privSendMessageWithArguments(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, va_list arguments)
 {
-	lolbj_selector selector = lolbj_selector_for_name(klass, selectorName);
-
+	struct SelectorPair selectorPair = privSelectorPairForSelectorName(klass, selectorName);
+	
 	// TODO: maybe return SelectorNotFound()?
-	if (selector == NULL) {
+	if (selectorPair.selector == NULL) {
 		return NULL;
 	}
 
-	struct Lolbject* self = lolbj_self_for_selector(obj, klass, selectorName);
+	struct Lolbject* self = selectorPair.propertyName == NULL ? obj : lolbj_get_object_property(obj, selectorPair.propertyName);
 
-	struct Lolbject* result = selector(self, arguments);
+	struct Lolbject* result = selectorPair.selector(self, arguments);
 
 	return result;
 }
@@ -557,17 +545,13 @@ void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct
 
 void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
 {
-	lolbj_selector selector = lolbj_selector_for_name(memberClass, selectorName);
+	struct SelectorPair selectorPair = privSelectorPairForSelectorName(memberClass, selectorName);
 
-	if (selector == NULL) {
+	if (selectorPair.selector == NULL) {
 		return;
 	}
 
-	klass->priv->members.values[klass->priv->members.count++] = (struct LolbjectMemberPair){
-		.selectorName = selectorName,
-		.propertyName = propertyName};
-
-	lolbj_add_selector(klass, selectorName, selector);
+	privAddSelector(klass, selectorName, propertyName, selectorPair.selector);
 }
 
 struct LolClass* lolbj_class_with_name(struct LolModule* module, const char* klassName)

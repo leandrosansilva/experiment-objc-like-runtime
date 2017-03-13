@@ -43,7 +43,7 @@ static struct Lolbject* dealloc_selector(struct ClassD* self, va_list arguments)
 static struct Lolbject* hello_from_a_selector(struct ClassD* self, va_list arguments)
 {
 	struct Box* nameValue = lolbj_send_message(self->name, "boxedValue");
-	printf("ClassD overrides ClassC with helloFromA: %s\n", (const char*)nameValue->value);
+	printf("ClassD overrides ClassC with helloFromA: %s and class == %s\n", (const char*)nameValue->value, lolbj_class_name(lolbj_class_for_object(self)));
 	RELEASE(nameValue);
 	return NULL;
 }
