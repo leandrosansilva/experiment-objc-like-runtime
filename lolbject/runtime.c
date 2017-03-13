@@ -206,8 +206,7 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 
 	fprintf(p, "}\"\n  ]\n");
 
-	// The "type" class
-	fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowhead = \"vee\"]\n",
+	fprintf(p, "  class_addr_%lld -> class_addr_%lld [style=\"dotted\" arrowhead=\"open\"]\n",
 			(unsigned long long)klass,
 			(unsigned long long)lolbj_class_for_object(klass));
 	
@@ -220,9 +219,9 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 
 	if (lolbj_class_parent(klass) != NULL) {
 		// The inheritance arrow
-		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowhead = \"empty\"]\n",
-			(unsigned long long)klass,
-			(unsigned long long)lolbj_class_parent(klass));
+		fprintf(p, "  class_addr_%lld -> class_addr_%lld [dir=\"back\" arrowtail = \"empty\"]\n",
+			(unsigned long long)lolbj_class_parent(klass),
+			(unsigned long long)klass);
 	}
 }
 
