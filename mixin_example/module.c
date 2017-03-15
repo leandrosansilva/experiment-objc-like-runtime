@@ -55,7 +55,7 @@ struct LolModule* init_lol_module()
 		.shutdown_module = unload_module
 	};
 
-	mixin_module = lolbj_create_module(&moduleDescriptor);
+	mixin_module = lolbj_send_message(LolRuntime, "createModuleFromDescriptor", &moduleDescriptor);
 
 	ClassA = lolbj_register_class_with_descriptor(mixin_module, &classADescriptor);
 

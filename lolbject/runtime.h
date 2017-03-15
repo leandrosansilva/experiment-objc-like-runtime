@@ -10,6 +10,8 @@ struct LolClass;
 struct LolModule;
 
 extern struct LolClass* Class;
+extern struct LolClass* LolModule;
+extern struct LolClass* LolRuntime;
 
 struct LolClass_Descriptor;
 

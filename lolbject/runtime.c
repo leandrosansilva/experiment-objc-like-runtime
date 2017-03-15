@@ -80,6 +80,8 @@ static struct LolModule_List registred_modules;
 
 static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass);
 
+void lolbj_runtime_initializer(struct LolClass* klass);
+
 void lolbj_init_runtime()
 {
 	static struct LolClass_Descriptor classDescriptor = {
@@ -124,6 +126,13 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor runtimeDescriptor = {
+		.name = "LolRuntime",
+		.version = 1,
+		.initializer = lolbj_runtime_initializer,
+		.unloader = NULL
+	};
+
 	static struct LolModule_Descriptor coreDescriptor = {
 		.version = 1,
 		.name = "core",
@@ -139,6 +148,7 @@ void lolbj_init_runtime()
 	Number = lolbj_register_class_with_descriptor(module, &numberDescriptor);
 	Box = lolbj_register_class_with_descriptor(module, &boxDescriptor);
 	Array = lolbj_register_class_with_descriptor(module, &arrayDescriptor);
+	LolRuntime = lolbj_register_class_with_descriptor(module, &runtimeDescriptor);
 
 	lolbj_register_module(module);
 }
