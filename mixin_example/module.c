@@ -57,13 +57,13 @@ struct LolModule* init_lol_module()
 
 	mixin_module = lolbj_send_message(LolRuntime, "createModuleFromDescriptor", &moduleDescriptor);
 
-	ClassA = lolbj_register_class_with_descriptor(mixin_module, &classADescriptor);
+	ClassA = lolbj_send_message(mixin_module, "registerClassWithDescriptor", &classADescriptor);
 
-	ClassB = lolbj_register_class_with_descriptor(mixin_module, &classBDescriptor);
+	ClassB = lolbj_send_message(mixin_module, "registerClassWithDescriptor", &classBDescriptor);
 
-	ClassC = lolbj_register_class_with_descriptor(mixin_module, &classCDescriptor);
+	ClassC = lolbj_send_message(mixin_module, "registerClassWithDescriptor", &classCDescriptor);
 
-	ClassD = lolbj_register_class_with_descriptor(mixin_module, &classDDescriptor);
+	ClassD = lolbj_send_message(mixin_module, "registerClassWithDescriptor", &classDDescriptor);
 
 	return mixin_module;
 }

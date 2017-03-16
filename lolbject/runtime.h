@@ -12,6 +12,7 @@ struct LolModule;
 extern struct LolClass* Class;
 extern struct LolClass* LolModule;
 extern struct LolClass* LolRuntime;
+extern struct LolClass* LolModule;
 
 struct LolClass_Descriptor;
 

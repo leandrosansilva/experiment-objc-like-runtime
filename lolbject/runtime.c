@@ -9,15 +9,15 @@
 #include <assert.h>
 #include <stddef.h>
 
-#include <lolbject/runtime.h>
-#include <lolbject/Class.h>
-#include <lolbject/Lolbject.h>
+#include "Lolbject.h"
+#include "runtime.h"
+#include "Class.h"
 #include "Lolbject_Private.h"
-#include <lolbject/String.h>
-#include <lolbject/Number.h>
-#include <lolbject/Lolbject.h>
-#include <lolbject/Box.h>
-#include <lolbject/Array.h>
+#include "String.h"
+#include "Number.h"
+#include "Lolbject.h"
+#include "Box.h"
+#include "Array.h"
 
 #define XDOT "xdot -"
 
@@ -71,10 +71,25 @@ struct LolModule_List
 
 struct LolModule
 {
+	struct Lolbject super;
 	struct LolModule_Descriptor* descriptor;
 	struct LolClass_List classes;
 	void* handler;
 };
+
+struct LolClass* LolModule;
+
+static struct LolClass* module_register_class_with_selector_selector(struct LolModule* self, va_list arguments)
+{
+	struct LolClass_Descriptor* descriptor = va_arg(arguments, struct LolClass_Descriptor*);
+	return lolbj_register_class_with_descriptor(self, descriptor);
+}
+
+void lolbj_module_initializer(struct LolClass* klass)
+{
+	lolbj_set_class_parent(klass, Lolbject);
+	lolbj_add_selector(klass, "registerClassWithDescriptor", module_register_class_with_selector_selector);
+}
 
 static struct LolModule_List registred_modules;
 
@@ -133,6 +148,13 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor lolModuleDescriptor = {
+		.name = "LolModule",
+		.version = 1,
+		.initializer = lolbj_module_initializer,
+		.unloader = NULL
+	};
+
 	static struct LolModule_Descriptor coreDescriptor = {
 		.version = 1,
 		.name = "core",
@@ -149,6 +171,7 @@ void lolbj_init_runtime()
 	Box = lolbj_register_class_with_descriptor(module, &boxDescriptor);
 	Array = lolbj_register_class_with_descriptor(module, &arrayDescriptor);
 	LolRuntime = lolbj_register_class_with_descriptor(module, &runtimeDescriptor);
+	LolModule = lolbj_register_class_with_descriptor(module, &lolModuleDescriptor);
 
 	lolbj_register_module(module);
 }
