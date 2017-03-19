@@ -36,9 +36,7 @@ static struct Lolbject* string_dealloc_selector(struct String* self, va_list arg
 		free(self->content);
 	}
 
-	lolbj_send_message_to_super(self, String, "dealloc");
-
-	return NULL;
+	return lolbj_send_message_to_super(self, String, "dealloc");
 }
 
 // the description of a string is the string itself!

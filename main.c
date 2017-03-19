@@ -19,10 +19,10 @@ int main(int argc, char** argv)
 	//lolbj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
-		struct LolModule* module = lolbj_load_module_from_file(argv[i]);
+		struct LolModule* module = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING(argv[i]));
 
 		if (module) {
-			lolbj_register_module(module);
+			lolbj_send_message(LolRuntime, "registerModule", module);
 			lolbj_print_class_diagram();
 		}
 	}
@@ -55,9 +55,8 @@ int main(int argc, char** argv)
 
 	struct LolModule* mixinExampleModule;
 	
-	if (mixinExampleModule = lolbj_load_module_from_file("./mixin_example/libmixin_example.so")) {
+	if (mixinExampleModule = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
 		struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
-
 
 		struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassD"), "alloc"), "initWithName", STRING("Lalalala"));
 
@@ -76,7 +75,7 @@ int main(int argc, char** argv)
 		RELEASE(c);
 		RELEASE(d);
 
-		lolbj_unload_module(mixinExampleModule);
+		RELEASE(mixinExampleModule);
 	}
 
 	RELEASE(format);

@@ -4,4 +4,4 @@
 
 void lolbj_number_initializer(struct LolClass* klass);
 
-extern struct LolClass* Number;
+struct LolClass* Number;

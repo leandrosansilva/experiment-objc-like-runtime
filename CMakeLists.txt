@@ -10,8 +10,8 @@ add_definitions(
 	-Wno-incompatible-pointer-types
 	-Werror=return-type
 	-std=gnu99
-	#-fno-omit-frame-pointer
-	#-fno-optimize-sibling-calls # disable tail call elimination
+	-fno-omit-frame-pointer
+	-fno-optimize-sibling-calls # disable tail call elimination
 	#-fsanitize=memory
 	#-fsanitize=address
 	#-fsanitize=undefined

@@ -1,6 +1,5 @@
 set(lolbject_runtime
 	runtime.c
-	LolRuntime.c
 	Lolbject.c
 	String.c
 	Number.c

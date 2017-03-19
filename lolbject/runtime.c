@@ -18,6 +18,7 @@
 #include "Lolbject.h"
 #include "Box.h"
 #include "Array.h"
+#include "macros.h"
 
 #define XDOT "xdot -"
 
@@ -77,7 +78,117 @@ struct LolModule
 	void* handler;
 };
 
+struct LolRuntime {
+	struct Lolbject super;
+};
+
+struct LolClass* LolRuntime;
 struct LolClass* LolModule;
+
+static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
+{
+	return lolbj_send_message_with_arguments(lolbj_send_message(LolModule, "alloc"), "initWithDescriptor", arguments);
+}
+
+static void lolbj_register_module(struct LolModule* module);
+
+static struct LolRuntime* lol_runtime_register_module_selector(struct LolRuntime* self, va_list arguments)
+{
+	struct LolModule* module = va_arg(arguments, struct LolModule*);
+	lolbj_register_module(module);
+	return self;
+}
+
+static struct LolModule* lol_runtime_load_module_from_file_selector(struct LolRuntime* self, va_list arguments)
+{
+	// TODO: handle errors, empty filename, etc.
+	struct String* filename = va_arg(arguments, struct String*);
+	struct Box* filenameBox = lolbj_send_message(filename, "boxedValue");
+	const char *f = (const char*)filenameBox->value;
+
+	void *handler = dlopen(f, RTLD_NOW|RTLD_LOCAL);
+
+	if (handler == NULL) {
+		fprintf(stderr, "Error opening module from file \"%s\": %s\n", f, dlerror());
+		return NULL;
+	}
+
+	struct LolModule* (*init_module)() = dlsym(handler, "init_lol_module");
+
+	if (init_module == NULL) {
+		fprintf(stderr, "Error opening module from file %s: %s\n", f, dlerror());
+		RELEASE(filenameBox);
+		RELEASE(filename);
+		dlclose(handler);
+		return NULL;
+	}
+
+	// FIXME: pass runtime information to the module, so it can decide not to load, for instance
+	// based on compatibility issues
+	struct LolModule* module = init_module();
+	module->handler = handler;
+
+	RELEASE(filenameBox);
+	RELEASE(filename);
+
+	return module;
+}
+
+static struct LolModule* lol_module_init_with_descriptor(struct LolModule* self, va_list arguments)
+{
+	if (self = lolbj_send_message_to_super(self, LolModule, "init")) {
+		struct LolModule_Descriptor* descriptor = va_arg(arguments, struct LolModule_Descriptor*);
+		self->descriptor = descriptor;
+	}
+
+	return self;
+}
+
+static struct LolModule* lol_module_object_size_selector(struct Lolbject* self, va_list arguments)
+{
+	size_t* size = va_arg(arguments, size_t*);
+	*size = sizeof(struct LolModule);
+	return NULL;
+}
+
+static void privUnloadNormalClass(struct LolClass* klass);
+static void privUnloadClassClass(struct LolClass* klass);
+
+static struct LolModule* coreModule;
+
+static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_list arguments)
+{
+	if (self->descriptor->shutdown_module != NULL) {
+		self->descriptor->shutdown_module(self);
+	}
+
+	for (size_t j = 0; j < self->classes.size; j++) {
+		void (*unload_class)(struct LolClass*) = self->classes.classes[j] == Class 
+			? privUnloadClassClass
+			: privUnloadNormalClass;
+
+		unload_class(self->classes.classes[j]);
+		self->classes.classes[j] = NULL;
+	}
+
+	if (self->handler != NULL) {
+		if (dlclose(self->handler) != 0) {
+			printf("Error closing module %s: %s\n", self->descriptor->name, dlerror());
+		}
+	}
+
+	return self == coreModule
+		? NULL
+		: lolbj_send_message_to_super(self, LolModule, "dealloc");
+}
+
+static void lolbj_runtime_initializer(struct LolClass* klass)
+{
+	lolbj_set_class_parent(klass, Lolbject);
+	lolbj_add_class_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
+	lolbj_add_class_selector(klass, "registerModule", lol_runtime_register_module_selector);
+	lolbj_add_class_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
+}
 
 static struct LolClass* module_register_class_with_selector_selector(struct LolModule* self, va_list arguments)
 {
@@ -85,17 +196,22 @@ static struct LolClass* module_register_class_with_selector_selector(struct LolM
 	return lolbj_register_class_with_descriptor(self, descriptor);
 }
 
-void lolbj_module_initializer(struct LolClass* klass)
+static void lolbj_module_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 	lolbj_add_selector(klass, "registerClassWithDescriptor", module_register_class_with_selector_selector);
+	lolbj_add_class_selector(klass, "objectSize", lol_module_object_size_selector);
+	lolbj_add_selector(klass, "initWithDescriptor", lol_module_init_with_descriptor);
+	lolbj_add_selector(klass, "dealloc", lol_module_dealloc_selector);
 }
 
 static struct LolModule_List registred_modules;
 
 static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass);
 
-void lolbj_runtime_initializer(struct LolClass* klass);
+static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass);
+
+static void lolbj_runtime_initializer(struct LolClass* klass);
 
 void lolbj_init_runtime()
 {
@@ -162,52 +278,35 @@ void lolbj_init_runtime()
 		.shutdown_module = NULL
 	};
 
-	struct LolModule* module = lolbj_create_module(&coreDescriptor);
+	Class = privCreateClass(&classDescriptor, false);
+	Lolbject = privCreateClass(&objectDescriptor, true);
 
-	Class = privRegisterClass(module, &classDescriptor, false);
-	Lolbject = lolbj_register_class_with_descriptor(module, &objectDescriptor);
-	String = lolbj_register_class_with_descriptor(module, &stringDescriptor);
-	Number = lolbj_register_class_with_descriptor(module, &numberDescriptor);
-	Box = lolbj_register_class_with_descriptor(module, &boxDescriptor);
-	Array = lolbj_register_class_with_descriptor(module, &arrayDescriptor);
-	LolRuntime = lolbj_register_class_with_descriptor(module, &runtimeDescriptor);
-	LolModule = lolbj_register_class_with_descriptor(module, &lolModuleDescriptor);
+	LolRuntime = privCreateClass(&runtimeDescriptor, true);
+	LolModule = privCreateClass(&lolModuleDescriptor, true);
 
-	lolbj_register_module(module);
+	coreModule = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &coreDescriptor);
+
+	coreModule->classes.classes[coreModule->classes.size++] = Class;
+	coreModule->classes.classes[coreModule->classes.size++] = Lolbject;
+	coreModule->classes.classes[coreModule->classes.size++] = LolRuntime;
+	coreModule->classes.classes[coreModule->classes.size++] = LolModule;
+
+	String = lolbj_register_class_with_descriptor(coreModule, &stringDescriptor);
+	Number = lolbj_register_class_with_descriptor(coreModule, &numberDescriptor);
+	Box = lolbj_register_class_with_descriptor(coreModule, &boxDescriptor);
+	Array = lolbj_register_class_with_descriptor(coreModule, &arrayDescriptor);
+
+	lolbj_register_module(coreModule);
 }
 
 static void privUnloadNormalClass(struct LolClass* klass);
 static void privUnloadClassClass(struct LolClass* klass);
 
-void lolbj_unload_module(struct LolModule* module)
-{
-	if (module->descriptor->shutdown_module != NULL) {
-		module->descriptor->shutdown_module(module);
-	}
-
-	for (size_t j = 0; j < module->classes.size; j++) {
-		void (*unload_class)(struct LolClass*) = module->classes.classes[j] == Class 
-			? privUnloadClassClass
-			: privUnloadNormalClass;
-
-		unload_class(module->classes.classes[j]);
-		module->classes.classes[j] = NULL;
-	}
-
-	if (module->handler != NULL) {
-		if (dlclose(module->handler) != 0) {
-			printf("Error closing module %s: %s\n", module->descriptor->name, dlerror());
-		}
-	}
-
-	free(module);
-}
-
 void lolbj_shutdown_runtime()
 {
 	for (size_t i = 0; i < registred_modules.size; i++) {
 		struct LolModule* module = registred_modules.modules[i];
-		lolbj_unload_module(module);
+		RELEASE(module);
 		registred_modules.modules[i] = NULL;
 	}
 }
@@ -342,6 +441,8 @@ static struct Lolbject* privSendMessageWithArguments(struct Lolbject* obj, struc
 	}
 
 	struct Lolbject* self = selectorPair.propertyName == NULL ? obj : lolbj_get_object_property(obj, selectorPair.propertyName);
+
+	//printf("Calling %s::%s\n", lolbj_class_name(lolbj_class_for_object(self)), selectorPair.name);
 
 	struct Lolbject* result = selectorPair.selector(self, arguments);
 
@@ -589,32 +690,7 @@ struct LolClass* lolbj_class_with_name(struct LolModule* module, const char* kla
 	return NULL;
 }
 
-struct LolModule* lolbj_load_module_from_file(const char* filename)
-{
-	void *handler = dlopen(filename, RTLD_NOW|RTLD_LOCAL);
-
-	if (handler == NULL) {
-		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
-		return NULL;
-	}
-
-	struct LolModule* (*init_module)() = dlsym(handler, "init_lol_module");
-
-	if (init_module == NULL) {
-		fprintf(stderr, "Error opening module from file %s: %s\n", filename, dlerror());
-		dlclose(handler);
-		return NULL;
-	}
-
-	// FIXME: pass runtime information to the module, so it can decide not to load, for instance
-	// based on compatibility issues
-	struct LolModule* module = init_module();
-	module->handler = handler;
-
-	return module;
-}
-
-static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass)
+static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass)
 {
 	struct LolClass* klass = malloc(sizeof(struct LolClass));
 
@@ -622,6 +698,13 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 	lolbj_set_class_name(klass, descriptor->name);
 
 	klass->priv->descriptor = descriptor;
+
+	return klass;
+}
+
+static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass)
+{
+	struct LolClass* klass = privCreateClass(descriptor, isNormalClass);
 
 	module->classes.classes[module->classes.size++] = klass;
 
@@ -631,15 +714,6 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor)
 {
 	return privRegisterClass(module, descriptor, true);
-}
-
-struct LolModule* lolbj_create_module(struct LolModule_Descriptor* descriptor)
-{
-	struct LolModule* module = malloc(sizeof(struct LolModule));
-	memset(module, 0, sizeof(struct LolModule));
-	module->descriptor = descriptor;
-
-	return module;
 }
 
 struct LolModule* lolbj_module_with_name(const char* name)
@@ -656,10 +730,10 @@ struct LolModule* lolbj_module_with_name(const char* name)
 
 struct LolModule* lolbj_core_module()
 {
-	return lolbj_module_with_name("core");
+	return coreModule;
 }
 
-void lolbj_register_module(struct LolModule* module)
+static void lolbj_register_module(struct LolModule* module)
 {
 	if (module == NULL) {
 		return;

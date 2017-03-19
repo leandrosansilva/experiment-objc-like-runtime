@@ -13,6 +13,7 @@ extern struct LolClass* Class;
 extern struct LolClass* LolModule;
 extern struct LolClass* LolRuntime;
 extern struct LolClass* LolModule;
+extern struct LolClass* Lolbject;
 
 struct LolClass_Descriptor;
 
@@ -36,11 +37,6 @@ struct LolClass_Descriptor
 };
 
 typedef struct Lolbject* (*lolbj_selector)(struct Lolbject*, va_list);
-
-struct LolModule* lolbj_create_module(struct LolModule_Descriptor* descriptor);
-
-// What about there was an error registring it?
-void lolbj_register_module(struct LolModule* module);
 
 struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
 
@@ -96,5 +92,3 @@ struct LolModule* lolbj_module_with_name(const char* name);
 struct LolModule* lolbj_core_module();
 
 struct Lolbject* lolbj_cast(struct LolClass* klass, struct Lolbject* obj);
-
-void lolbj_unload_module(struct LolModule* module);

@@ -57,9 +57,7 @@ static struct Lolbject* dealloc_selector(struct Array* self, va_list arguments)
 		free(self->elements);
 	}
 
-	lolbj_send_message_to_super(self, Array, "dealloc");
-
-	return NULL;
+	return lolbj_send_message_to_super(self, Array, "dealloc");
 }
 
 static struct Lobject* get_element_selector(struct Array* self, va_list arguments)

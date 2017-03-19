@@ -11,4 +11,4 @@ struct Box
 
 void lolbj_box_initializer(struct LolClass* klass);
 
-extern struct LolClass* Box;
+struct LolClass* Box;

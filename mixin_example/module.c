@@ -2,6 +2,7 @@
 #include "module.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 void load_module(struct LolModule* module)
 {
@@ -55,7 +56,9 @@ struct LolModule* init_lol_module()
 		.shutdown_module = unload_module
 	};
 
-	mixin_module = lolbj_send_message(LolRuntime, "createModuleFromDescriptor", &moduleDescriptor);
+	mixin_module = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &moduleDescriptor);
+
+	assert(mixin_module);
 
 	ClassA = lolbj_send_message(mixin_module, "registerClassWithDescriptor", &classADescriptor);
 

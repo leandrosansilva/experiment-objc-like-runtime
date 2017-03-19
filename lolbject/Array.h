@@ -4,4 +4,4 @@
 
 void lolbj_array_initializer(struct LolClass* klass);
 
-extern struct LolClass* Array;
+struct LolClass* Array;
