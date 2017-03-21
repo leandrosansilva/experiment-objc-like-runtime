@@ -18,6 +18,7 @@
 #include "Lolbject.h"
 #include "Box.h"
 #include "Array.h"
+#include "DefaultAllocator.h"
 #include "macros.h"
 
 #define XDOT "xdot -"
@@ -271,6 +272,13 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor defaultAllocatorDescriptor = {
+		.name = "DefaultAllocator",
+		.version = 1,
+		.initializer = lolbj_default_allocator_initializer,
+		.unloader = NULL
+	};
+
 	static struct LolModule_Descriptor coreDescriptor = {
 		.version = 1,
 		.name = "core",
@@ -280,7 +288,7 @@ void lolbj_init_runtime()
 
 	Class = privCreateClass(&classDescriptor, false);
 	Lolbject = privCreateClass(&objectDescriptor, true);
-
+	DefaultAllocator = privCreateClass(&defaultAllocatorDescriptor, true);
 	LolRuntime = privCreateClass(&runtimeDescriptor, true);
 	LolModule = privCreateClass(&lolModuleDescriptor, true);
 
@@ -290,6 +298,7 @@ void lolbj_init_runtime()
 	coreModule->classes.classes[coreModule->classes.size++] = Lolbject;
 	coreModule->classes.classes[coreModule->classes.size++] = LolRuntime;
 	coreModule->classes.classes[coreModule->classes.size++] = LolModule;
+	coreModule->classes.classes[coreModule->classes.size++] = DefaultAllocator;
 
 	String = lolbj_register_class_with_descriptor(coreModule, &stringDescriptor);
 	Number = lolbj_register_class_with_descriptor(coreModule, &numberDescriptor);

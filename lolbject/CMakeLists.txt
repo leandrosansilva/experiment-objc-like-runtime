@@ -5,6 +5,7 @@ set(lolbject_runtime
 	Number.c
 	Box.c
 	Array.c
+	DefaultAllocator.c
 )
 
 add_library(
