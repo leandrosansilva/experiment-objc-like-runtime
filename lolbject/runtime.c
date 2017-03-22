@@ -88,10 +88,35 @@ struct LolClass* LolModule;
 
 static struct LolModule* coreModule;
 
+static struct LolModule_List registred_modules;
+
 static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
 {
 	return lolbj_send_message_with_arguments(lolbj_send_message(LolModule, "alloc"), "initWithDescriptor", arguments);
 }
+
+static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime* self, va_list arguments)
+{
+	struct String* moduleNameObj = va_arg(arguments, struct String*);
+	struct Box* moduleNameBox = lolbj_send_message(moduleNameObj, "boxedValue");
+	const char* moduleName = (const char*)moduleNameBox->value;
+
+	for (size_t i = 0; i < registred_modules.size; i++) {
+		struct LolModule* module = registred_modules.modules[i];
+		if (strcmp(module->descriptor->name, moduleName) == 0) {
+			RELEASE(moduleNameBox);
+			RELEASE(moduleNameObj);
+			return module;
+		}
+	}
+
+	RELEASE(moduleNameBox);
+	RELEASE(moduleNameObj);
+
+	return NULL;
+}
+
+
 
 static struct LolModule* lol_runtime_core_module_selector(struct LolRuntime* self, va_list arguments)
 {
@@ -211,10 +236,13 @@ static void lolbj_runtime_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 	lolbj_add_class_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
+	lolbj_add_class_selector(klass, "moduleWithName", lol_runtime_module_with_name_selector);
 	lolbj_add_class_selector(klass, "coreModule", lol_runtime_core_module_selector);
 	lolbj_add_class_selector(klass, "registerModule", lol_runtime_register_module_selector);
 	lolbj_add_class_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
 }
+
+static struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
 
 static struct LolClass* module_register_class_with_selector_selector(struct LolModule* self, va_list arguments)
 {
@@ -231,8 +259,6 @@ static void lolbj_module_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "classWithName", lol_module_class_with_name_selector);
 	lolbj_add_selector(klass, "dealloc", lol_module_dealloc_selector);
 }
-
-static struct LolModule_List registred_modules;
 
 static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass);
 
@@ -707,21 +733,9 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 	return klass;
 }
 
-struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor)
+static struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor)
 {
 	return privRegisterClass(module, descriptor, true);
-}
-
-struct LolModule* lolbj_module_with_name(const char* name)
-{
-	for (size_t i = 0; i < registred_modules.size; i++) {
-		struct LolModule* module = registred_modules.modules[i];
-		if (strcmp(module->descriptor->name, name) == 0) {
-			return module;
-		}
-	}
-
-	return NULL;
 }
 
 static void lolbj_register_module(struct LolModule* module)

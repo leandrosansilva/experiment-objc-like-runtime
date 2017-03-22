@@ -38,10 +38,6 @@ struct LolClass_Descriptor
 
 typedef struct Lolbject* (*lolbj_selector)(struct Lolbject*, va_list);
 
-struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
-
-struct LolModule* lolbj_load_module_from_file(const char* filename);
-
 void lolbj_add_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector);
 
 void lolbj_add_class_selector(struct LolClass* klass, const char* selectorName, lolbj_selector selector);
@@ -80,7 +76,5 @@ struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* 
 void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset);
 
 void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
-
-struct LolModule* lolbj_module_with_name(const char* name);
 
 struct Lolbject* lolbj_cast(struct LolClass* klass, struct Lolbject* obj);
