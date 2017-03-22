@@ -152,24 +152,22 @@ static struct LolModule* lol_module_object_size_selector(struct Lolbject* self, 
 	return NULL;
 }
 
-static void privUnloadNormalClass(struct LolClass* klass);
-static void privUnloadClassClass(struct LolClass* klass);
-
 static struct LolModule* coreModule;
+
+static void privUnloadClass(struct LolClass* klass);
 
 static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_list arguments)
 {
+	printf("Releasing module \"%s\"\n", self->descriptor->name);
+
 	if (self->descriptor->shutdown_module != NULL) {
 		self->descriptor->shutdown_module(self);
 	}
 
-	for (size_t j = 0; j < self->classes.size; j++) {
-		void (*unload_class)(struct LolClass*) = self->classes.classes[j] == Class 
-			? privUnloadClassClass
-			: privUnloadNormalClass;
-
-		unload_class(self->classes.classes[j]);
-		self->classes.classes[j] = NULL;
+	for (size_t j = self->classes.size; j > 0; j--) {
+		printf("  Releasing class \"%s\"\n", lolbj_class_name(self->classes.classes[j - 1]));
+		privUnloadClass(self->classes.classes[j - 1]);
+		self->classes.classes[j - 1] = NULL;
 	}
 
 	if (self->handler != NULL) {
@@ -308,15 +306,12 @@ void lolbj_init_runtime()
 	lolbj_register_module(coreModule);
 }
 
-static void privUnloadNormalClass(struct LolClass* klass);
-static void privUnloadClassClass(struct LolClass* klass);
-
 void lolbj_shutdown_runtime()
 {
-	for (size_t i = 0; i < registred_modules.size; i++) {
-		struct LolModule* module = registred_modules.modules[i];
+	for (size_t i = registred_modules.size; i > 0; i--) {
+		struct LolModule* module = registred_modules.modules[i - 1];
 		RELEASE(module);
-		registred_modules.modules[i] = NULL;
+		registred_modules.modules[i - 1] = NULL;
 	}
 }
 
@@ -494,71 +489,41 @@ void lolbj_class_initializer(struct LolClass* klass)
 	lolbj_set_class_parent(klass, NULL);
 }
 
-static void classStaticInitializer(struct LolClass* klass)
-{
-	lolbj_set_class_parent(klass, Class);
-	lolbj_set_class_name(klass, NULL);
-}
-
-static void privInitializeClass(struct LolClass* klass, lolbj_class_initializer_callback initializer, bool createStatic);
-
-static struct LolClass* createClassWithStaticMethods(struct LolClass* klass, bool shouldCreate)
-{
-	if (!shouldCreate) {
-		return Lolbject;
-	}
-
-	struct LolClass* class_with_class_methods = malloc(sizeof(struct LolClass));
-	privInitializeClass(class_with_class_methods, classStaticInitializer, false);
-
-	return class_with_class_methods;
-}
-
 static void privInitializeClass(struct LolClass* klass, lolbj_class_initializer_callback initializer, bool createStatic)
 {
-	klass->priv = malloc(sizeof(struct LolClass_Private));
-	memset(klass->priv, 0, sizeof(struct LolClass_Private));
+	uint8_t* baseAddress = (uint8_t*)klass;
+	size_t staticClassOffset = sizeof(struct LolClass);
+	size_t klassProtoPrivOffset = staticClassOffset + sizeof(struct LolClass);
+	size_t staticClassProtoPrivOffset = klassProtoPrivOffset + sizeof(struct Lolbject_Private);
+	size_t klassPrivateOffset = staticClassProtoPrivOffset + sizeof(struct Lolbject_Private);
+	size_t staticClassPrivateOffset = klassPrivateOffset + sizeof(struct LolClass_Private);
 
-	klass->proto.priv = malloc(sizeof(struct Lolbject_Private));
-	memset(klass->proto.priv, 0, sizeof(struct Lolbject_Private));
+	klass->priv = baseAddress + klassPrivateOffset;
+	klass->proto.priv = baseAddress + klassProtoPrivOffset;
+	klass->proto.klass = Lolbject;
 
 	klass->proto.priv->tag = lolbj_runtime_type_class;
-	klass->proto.klass = createClassWithStaticMethods(klass, createStatic);
 
-	if (initializer != NULL) {
-		initializer(klass);
+	if (createStatic) {
+		klass->proto.klass = baseAddress + staticClassOffset;
+		klass->proto.klass->proto.priv = baseAddress + staticClassProtoPrivOffset;
+		klass->proto.klass->priv = baseAddress + staticClassPrivateOffset;
+		lolbj_set_class_parent(klass->proto.klass, Class);
+		klass->proto.klass->proto.priv->tag = lolbj_runtime_type_class;
 	}
+
+	assert(initializer && "class initializer callback must be defined!");
+
+	initializer(klass);
 }
 
-static void privUnloadClass(struct LolClass* klass, bool ownStaticClass)
+static void privUnloadClass(struct LolClass* klass)
 {
 	if (klass->priv->descriptor != NULL && klass->priv->descriptor->unloader != NULL) {
 		klass->priv->descriptor->unloader(klass);
 	}
 
-	if (ownStaticClass) {
-		privUnloadClass(klass->proto.klass, false);
-	}
-
-	free(klass->proto.priv);
-	free(klass->priv);
 	free(klass);
-}
-
-static void privUnloadNormalClass(struct LolClass* klass)
-{
-	privUnloadClass(klass, true);
-}
-
-static void privUnloadClassClass(struct LolClass* klass)
-{
-	// Remember, class Class uses Lolbject as type
-	privUnloadClass(klass, false);
-}
-
-void lolbj_unload_class(struct LolClass* klass)
-{
-	privUnloadNormalClass(klass);
 }
 
 void lolbj_set_class_parent(struct LolClass* klass, struct LolClass* parent)
@@ -701,7 +666,14 @@ struct LolClass* lolbj_class_with_name(struct LolModule* module, const char* kla
 
 static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass)
 {
-	struct LolClass* klass = malloc(sizeof(struct LolClass));
+	size_t totalSize = sizeof(struct LolClass) // main class
+											+ sizeof(struct LolClass) // static-class
+											+ sizeof(struct Lolbject_Private) // main class - prototype private
+											+ sizeof(struct Lolbject_Private) // static class - prototype private
+											+ sizeof(struct LolClass_Private) // main class - private
+											+ sizeof(struct LolClass_Private); // static-class - private
+
+	struct LolClass* klass = malloc(totalSize);
 
 	privInitializeClass(klass, descriptor->initializer, isNormalClass);
 	lolbj_set_class_name(klass, descriptor->name);

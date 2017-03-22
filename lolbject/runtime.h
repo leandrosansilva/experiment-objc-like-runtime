@@ -54,8 +54,6 @@ struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, struct LolCla
 struct Lolbject* lolbj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
 struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, va_list arguments);
 
-void lolbj_unload_class(struct LolClass* klass);
-
 void lolbj_class_initializer(struct LolClass* klass);
 
 void lolbj_init_runtime();
