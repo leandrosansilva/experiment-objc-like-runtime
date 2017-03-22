@@ -31,7 +31,7 @@ struct SelectorPair {
 
 struct LolbjectSelectors
 {
-	struct SelectorPair selectors[1024];
+	struct SelectorPair selectors[32];
 	size_t size;
 };
 
@@ -45,7 +45,7 @@ struct LolbjectPropertyPair
 struct LolbjectProperties
 {
 	size_t size;
-	struct LolbjectPropertyPair properties[2014];
+	struct LolbjectPropertyPair properties[32];
 };
 
 struct LolClass_Private
@@ -61,13 +61,13 @@ struct LolClass* Class;
 
 struct LolClass_List
 {
-	struct LolClass* classes[1024];
+	struct LolClass* classes[64];
 	size_t size;
 };
 
 struct LolModule_List
 {
-	struct LolModule* modules[1024];
+	struct LolModule* modules[64];
 	size_t size;
 };
 
