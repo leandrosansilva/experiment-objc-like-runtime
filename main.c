@@ -44,6 +44,9 @@ int main(int argc, char** argv)
 	assert(lolbj_send_message(names, "objectAtIndex", INT(2)) == String);
 	assert(lolbj_send_message(names, "objectAtIndex", INT(3)) == NULL);
 
+	assert(nameValue);
+	assert(lengthValue);
+
 	printf("String \"%s\", Length == %d\n", (const char*)nameValue->value, *(int*)lengthValue->value);
 
 	struct String* format = STRING("Name: %@, length: %@");
