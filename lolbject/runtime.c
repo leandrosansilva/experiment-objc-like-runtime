@@ -86,9 +86,16 @@ struct LolRuntime {
 struct LolClass* LolRuntime;
 struct LolClass* LolModule;
 
+static struct LolModule* coreModule;
+
 static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
 {
 	return lolbj_send_message_with_arguments(lolbj_send_message(LolModule, "alloc"), "initWithDescriptor", arguments);
+}
+
+static struct LolModule* lol_runtime_core_module_selector(struct LolRuntime* self, va_list arguments)
+{
+	return coreModule;
 }
 
 static void lolbj_register_module(struct LolModule* module);
@@ -152,8 +159,6 @@ static struct LolModule* lol_module_object_size_selector(struct Lolbject* self, 
 	return NULL;
 }
 
-static struct LolModule* coreModule;
-
 static void privUnloadClass(struct LolClass* klass);
 
 static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_list arguments)
@@ -185,6 +190,7 @@ static void lolbj_runtime_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 	lolbj_add_class_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
+	lolbj_add_class_selector(klass, "coreModule", lol_runtime_core_module_selector);
 	lolbj_add_class_selector(klass, "registerModule", lol_runtime_register_module_selector);
 	lolbj_add_class_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
 }
@@ -707,11 +713,6 @@ struct LolModule* lolbj_module_with_name(const char* name)
 	}
 
 	return NULL;
-}
-
-struct LolModule* lolbj_core_module()
-{
-	return coreModule;
 }
 
 static void lolbj_register_module(struct LolModule* module)

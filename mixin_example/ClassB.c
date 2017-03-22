@@ -24,7 +24,7 @@ static struct ClassB* hello_selector(struct ClassB* self, va_list arguments)
 
 void lolbj_class_b_initializer(struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, lolbj_class_with_name(lolbj_core_module(), "Lolbject"));
+	lolbj_set_class_parent(klass, lolbj_class_with_name(lolbj_send_message(LolRuntime, "coreModule"), "Lolbject"));
 	lolbj_set_class_name(klass, "ClassB");
 
 	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
