@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
 	lolbj_init_runtime();
 
-	//lolbj_print_class_diagram();
+	lolbj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
 		struct LolModule* module = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING(argv[i]));
@@ -59,9 +59,9 @@ int main(int argc, char** argv)
 	struct LolModule* mixinExampleModule;
 	
 	if (mixinExampleModule = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
-		struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassC"), "alloc"), "init");
+		struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_send_message(mixinExampleModule, "classWithName", STRING("ClassC")), "alloc"), "init");
 
-		struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_class_with_name(mixinExampleModule, "ClassD"), "alloc"), "initWithName", STRING("Lalalala"));
+		struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_send_message(mixinExampleModule, "classWithName", STRING("ClassD")), "alloc"), "initWithName", STRING("Lalalala"));
 
 		lolbj_send_message(c, "helloFromA");
 		lolbj_send_message(c, "helloFromB");

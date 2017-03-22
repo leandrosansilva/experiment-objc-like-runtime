@@ -54,8 +54,6 @@ struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, struct LolCla
 struct Lolbject* lolbj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
 struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, va_list arguments);
 
-void lolbj_class_initializer(struct LolClass* klass);
-
 void lolbj_init_runtime();
 
 void lolbj_shutdown_runtime();
@@ -82,8 +80,6 @@ struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* 
 void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset);
 
 void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
-
-struct LolClass* lolbj_class_with_name(struct LolModule* module, const char* klassName);
 
 struct LolModule* lolbj_module_with_name(const char* name);
 

@@ -142,6 +142,27 @@ static struct LolModule* lol_runtime_load_module_from_file_selector(struct LolRu
 	return module;
 }
 
+static struct LolModule* lol_module_class_with_name_selector(struct LolModule* self, va_list arguments)
+{
+	struct String* klassNameObj = va_arg(arguments, struct String*);
+	struct Box* klassNameBox = lolbj_send_message(klassNameObj, "boxedValue");
+
+	const char* klassName = (const char*)klassNameBox->value;
+
+	for (size_t i = 0; i < self->classes.size; i++) {
+		if (strcmp(lolbj_class_name(self->classes.classes[i]), klassName) == 0) {
+				RELEASE(klassNameBox);
+				RELEASE(klassNameObj);
+				return self->classes.classes[i];
+		}
+	}
+
+	RELEASE(klassNameBox);
+	RELEASE(klassNameObj);
+
+	return NULL;
+}
+
 static struct LolModule* lol_module_init_with_descriptor(struct LolModule* self, va_list arguments)
 {
 	if (self = lolbj_send_message_to_super(self, LolModule, "init")) {
@@ -207,6 +228,7 @@ static void lolbj_module_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "registerClassWithDescriptor", module_register_class_with_selector_selector);
 	lolbj_add_class_selector(klass, "objectSize", lol_module_object_size_selector);
 	lolbj_add_selector(klass, "initWithDescriptor", lol_module_init_with_descriptor);
+	lolbj_add_selector(klass, "classWithName", lol_module_class_with_name_selector);
 	lolbj_add_selector(klass, "dealloc", lol_module_dealloc_selector);
 }
 
@@ -217,6 +239,8 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass);
 
 static void lolbj_runtime_initializer(struct LolClass* klass);
+
+static void lolbj_class_initializer(struct LolClass* klass);
 
 void lolbj_init_runtime()
 {
@@ -490,7 +514,7 @@ struct Lolbject* lolbj_send_message(struct Lolbject* obj, const char* selectorNa
 	return result;
 }
 
-void lolbj_class_initializer(struct LolClass* klass)
+static void lolbj_class_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, NULL);
 }
@@ -653,21 +677,6 @@ void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* m
 	}
 
 	privAddSelector(klass, selectorName, propertyName, selectorPair.selector);
-}
-
-struct LolClass* lolbj_class_with_name(struct LolModule* module, const char* klassName)
-{
-	if (module == NULL) {
-		return NULL;
-	}
-	
-	for (size_t i = 0; i < module->classes.size; i++) {
-		if (strcmp(lolbj_class_name(module->classes.classes[i]), klassName) == 0) {
-				return module->classes.classes[i];
-		}
-	}
-
-	return NULL;
 }
 
 static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass)

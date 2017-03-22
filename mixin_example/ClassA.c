@@ -1,5 +1,7 @@
 #include <lolbject/Class.h>
 #include <lolbject/runtime.h>
+#include <lolbject/macros.h>
+#include <lolbject/String.h>
 
 #include <stdio.h>
 
@@ -24,7 +26,7 @@ static struct ClassA* hello_selector(struct ClassA* self, va_list arguments)
 
 void lolbj_class_a_initializer(struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, lolbj_class_with_name(lolbj_send_message(LolRuntime, "coreModule"), "Lolbject"));
+	lolbj_set_class_parent(klass, lolbj_send_message(lolbj_send_message(LolRuntime, "coreModule"), "classWithName", STRING("Lolbject")));
 	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 	lolbj_add_selector(klass, "helloFromA", hello_selector);
 }

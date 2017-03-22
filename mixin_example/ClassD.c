@@ -50,7 +50,7 @@ static struct Lolbject* hello_from_a_selector(struct ClassD* self, va_list argum
 
 void lolbj_class_d_initializer(struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, lolbj_class_with_name(mixin_module, "ClassC"));
+	lolbj_set_class_parent(klass, lolbj_send_message(mixin_module, "classWithName", STRING("ClassC")));
 
 	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 
