@@ -9,11 +9,11 @@ struct Lolbject;
 struct LolClass;
 struct LolModule;
 
-extern struct LolClass* Class;
-extern struct LolClass* LolModule;
-extern struct LolClass* LolRuntime;
-extern struct LolClass* LolModule;
-extern struct LolClass* Lolbject;
+struct LolClass* Class;
+struct LolClass* LolModule;
+struct LolClass* LolRuntime;
+struct LolClass* LolModule;
+struct LolClass* Lolbject;
 
 struct LolClass_Descriptor;
 
