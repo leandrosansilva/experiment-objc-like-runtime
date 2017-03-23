@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
 	lolbj_init_runtime();
 
-	lolbj_print_class_diagram();
+	//lolbj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
 		struct LolModule* module = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING(argv[i]));

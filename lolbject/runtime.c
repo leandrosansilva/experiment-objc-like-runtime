@@ -37,7 +37,7 @@ struct LolbjectSelectors
 
 struct LolbjectPropertyPair
 {
-	const char* name;
+	const char* name; // TODO: do not use pointers, but contiguous memory
 	size_t offset;
 	struct LolClass* klass;
 };
@@ -362,11 +362,29 @@ void lolbj_init_runtime()
 	lolbj_register_module(coreModule);
 }
 
+static void privDeleteCoreModule(struct LolModule* module, ...)
+{
+	va_list arguments;
+	va_start(arguments, module);
+	lol_module_dealloc_selector(module, arguments);
+	va_end(arguments);
+}
+
+static void privDeleteModule(struct LolModule* module)
+{
+	if (module == coreModule) {
+		privDeleteCoreModule(module);
+		return;
+	}
+
+	RELEASE(module);
+}
+
 void lolbj_shutdown_runtime()
 {
 	for (size_t i = registred_modules.size; i > 0; i--) {
 		struct LolModule* module = registred_modules.modules[i - 1];
-		RELEASE(module);
+		privDeleteModule(module);
 		registred_modules.modules[i - 1] = NULL;
 	}
 }
@@ -715,6 +733,7 @@ static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, 
 											+ sizeof(struct LolClass_Private); // static-class - private
 
 	struct LolClass* klass = malloc(totalSize);
+	memset(klass, 0, totalSize);
 
 	privInitializeClass(klass, descriptor->initializer, isNormalClass);
 	lolbj_set_class_name(klass, descriptor->name);
