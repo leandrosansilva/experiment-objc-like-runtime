@@ -209,14 +209,11 @@ static void privUnloadClass(struct LolClass* klass);
 
 static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_list arguments)
 {
-	printf("Releasing module \"%s\"\n", self->descriptor->name);
-
 	if (self->descriptor->shutdown_module != NULL) {
 		self->descriptor->shutdown_module(self);
 	}
 
 	for (size_t j = self->classes.size; j > 0; j--) {
-		printf("  Releasing class \"%s\"\n", lolbj_class_name(self->classes.classes[j - 1]));
 		privUnloadClass(self->classes.classes[j - 1]);
 		self->classes.classes[j - 1] = NULL;
 	}
