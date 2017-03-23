@@ -40,6 +40,6 @@ void lolbj_default_allocator_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 
-	lolbj_add_class_selector(klass, "allocateMemory", allocator_allocate_selector);
-	lolbj_add_class_selector(klass, "deleteMemory", allocator_deallocate_selector);
+	lolbj_add_class_selector(klass, "allocateObject", allocator_allocate_selector);
+	lolbj_add_class_selector(klass, "deleteObject", allocator_deallocate_selector);
 }

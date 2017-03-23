@@ -52,7 +52,7 @@ static struct Lolbject* release_object_selector(struct LolClass* self, va_list a
 	if (((*object)->priv->ref_counter) == 0) {
 		lolbj_send_message(*object, "dealloc");
 		struct Lolbject* allocator = lolbj_send_message(self, "allocator");
-		lolbj_send_message(allocator, "deleteMemory", *object);
+		lolbj_send_message(allocator, "deleteObject", *object);
 	} 
 
 	*object = NULL;
@@ -72,7 +72,7 @@ static struct Lolbject* alloc_selector(struct LolClass* self, va_list arguments)
 	size_t size = 0;
 	lolbj_send_message(self, "objectSize", &size);
 
-	struct Lolbject* obj = lolbj_send_message(allocator, "allocateMemory", size);
+	struct Lolbject* obj = lolbj_send_message(allocator, "allocateObject", size);
 
 	assert(obj);
 	assert(obj->priv);
