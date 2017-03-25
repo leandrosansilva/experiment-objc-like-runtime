@@ -7,6 +7,7 @@ set(lolbject_runtime
 	Array.c
 	MutableArray.c
 	DefaultAllocator.c
+	TreeObject.c
 )
 
 add_library(

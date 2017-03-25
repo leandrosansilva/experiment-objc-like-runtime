@@ -4,6 +4,7 @@
 #include <lolbject/Number.h>
 #include <lolbject/Box.h>
 #include <lolbject/Array.h>
+#include <lolbject/TreeObject.c>
 #include <lolbject/macros.h>
 
 #include <stdio.h>
@@ -43,6 +44,15 @@ int main(int argc, char** argv)
 	assert(lolbj_send_message(names, "objectAtIndex", INT(3)) == String);
 	assert(lolbj_send_message(names, "objectAtIndex", INT(4)) == NULL);
 	RELEASE(names);
+
+	struct TreeObject* tree = lolbj_send_message(lolbj_send_message(TreeObject, "alloc"), "init");
+	struct Number* tree_child_1 = lolbj_send_message(lolbj_send_message(tree, "allocChild", Number), "initWithInt", 42);
+	struct String* tree_child_2 = lolbj_send_message(lolbj_send_message(tree, "allocChild", String), "initWithString", "Hello world");
+
+	assert(tree_child_1);
+	assert(tree_child_2);
+
+	RELEASE(tree);
 
 	assert(nameValue);
 	assert(lengthValue);

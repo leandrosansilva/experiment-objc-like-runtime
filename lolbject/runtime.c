@@ -20,6 +20,7 @@
 #include "Array.h"
 #include "MutableArray.h"
 #include "DefaultAllocator.h"
+#include "TreeObject.h"
 #include "macros.h"
 
 #define XDOT "xdot -"
@@ -339,6 +340,13 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor treeObjectDescriptor = {
+		.name = "TreeObject",
+		.version = 1,
+		.initializer = lolbj_treeobject_initializer,
+		.unloader = NULL
+	};
+
 	static struct LolModule_Descriptor coreDescriptor = {
 		.version = 1,
 		.name = "core",
@@ -365,6 +373,7 @@ void lolbj_init_runtime()
 	Box = lolbj_register_class_with_descriptor(coreModule, &boxDescriptor);
 	MutableArray = lolbj_register_class_with_descriptor(coreModule, &mutableArrayDescriptor);
 	Array = lolbj_register_class_with_descriptor(coreModule, &arrayDescriptor);
+	TreeObject = lolbj_register_class_with_descriptor(coreModule, &treeObjectDescriptor);
 
 	lolbj_register_module(coreModule);
 }
