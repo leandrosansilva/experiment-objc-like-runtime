@@ -99,7 +99,6 @@ static struct MutableArray* set_element_selector(struct MutableArray* self, va_l
 	int index = *((int*)indexValue->value);
 
 	if (index < 0) {
-		printf("### array index cannot be negative!\n");
 		RELEASE(indexObj);
 		RELEASE(indexValue);
 		RELEASE(value);
@@ -111,7 +110,6 @@ static struct MutableArray* set_element_selector(struct MutableArray* self, va_l
 		// to prevent multiplication issues
 		self->capacity += self->capacity == 0 ? 2 : 0;
 		self->capacity *= 1.5;
-		printf("reallocing array to capacity %d\n", self->capacity);
 		self->elements = realloc(self->elements, self->capacity * sizeof(struct Lolbject*));
 
 		size_t capacity_difference = self->capacity - old_capacity;
@@ -120,10 +118,8 @@ static struct MutableArray* set_element_selector(struct MutableArray* self, va_l
 
 	if ((size_t)index >= self->length) {
 		self->length = (size_t)index + 1;
-		printf("new array size: %d\n", self->length);
 	}
 
-	printf("Setting element of kind %s to position %d\n",lolbj_class_name(lolbj_class_for_object(value)), index);
 	self->elements[index] = value;
 
 	RELEASE(indexObj);
