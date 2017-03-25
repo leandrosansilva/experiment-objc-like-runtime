@@ -37,12 +37,12 @@ int main(int argc, char** argv)
 
 	struct Object* nameValueCaller = RETAIN(lolbj_get_object_property(nameValue, "caller"));
 
-	struct Array* names = ARRAY(RETAIN(length), RETAIN(name), String);
-
+	struct Array* names = ARRAY(RETAIN(length), STRING("Maria"), RETAIN(name), String);
 	assert(lolbj_send_message(names, "objectAtIndex", INT(0)) == length);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(1)) == name);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(2)) == String);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(3)) == NULL);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(2)) == name);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(3)) == String);
+	assert(lolbj_send_message(names, "objectAtIndex", INT(4)) == NULL);
+	RELEASE(names);
 
 	assert(nameValue);
 	assert(lengthValue);
@@ -84,7 +84,6 @@ int main(int argc, char** argv)
 	RELEASE(format);
 	RELEASE(name);
 	RELEASE(length);
-	RELEASE(names);
 	RELEASE(formattedString);
 	RELEASE(stringDescription);
 	RELEASE(numberDescription);

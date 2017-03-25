@@ -42,6 +42,7 @@ static struct Lolbject* release_object_selector(struct LolClass* self, va_list a
 	assert(*object != NULL);
 
 	if (lolbj_object_is_class(*object)) {
+		*object = NULL;
 		return NULL;
 	}
 

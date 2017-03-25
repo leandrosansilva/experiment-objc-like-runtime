@@ -5,6 +5,7 @@ set(lolbject_runtime
 	Number.c
 	Box.c
 	Array.c
+	MutableArray.c
 	DefaultAllocator.c
 )
 

@@ -18,6 +18,7 @@
 #include "Lolbject.h"
 #include "Box.h"
 #include "Array.h"
+#include "MutableArray.h"
 #include "DefaultAllocator.h"
 #include "macros.h"
 
@@ -309,6 +310,14 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor mutableArrayDescriptor = {
+		.name = "MutableArray",
+		.version = 1,
+		.initializer = lolbj_mutablearray_initializer,
+		.unloader = NULL
+	};
+
+
 	static struct LolClass_Descriptor runtimeDescriptor = {
 		.name = "LolRuntime",
 		.version = 1,
@@ -354,6 +363,7 @@ void lolbj_init_runtime()
 	String = lolbj_register_class_with_descriptor(coreModule, &stringDescriptor);
 	Number = lolbj_register_class_with_descriptor(coreModule, &numberDescriptor);
 	Box = lolbj_register_class_with_descriptor(coreModule, &boxDescriptor);
+	MutableArray = lolbj_register_class_with_descriptor(coreModule, &mutableArrayDescriptor);
 	Array = lolbj_register_class_with_descriptor(coreModule, &arrayDescriptor);
 
 	lolbj_register_module(coreModule);
