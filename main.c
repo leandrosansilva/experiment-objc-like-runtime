@@ -1,11 +1,12 @@
 #include <lolbject/runtime.h>
+#include <lolbject/macros.h>
 #include <lolbject/Lolbject.h>
 #include <lolbject/String.h>
 #include <lolbject/Number.h>
 #include <lolbject/Box.h>
 #include <lolbject/Array.h>
-#include <lolbject/TreeObject.c>
-#include <lolbject/macros.h>
+#include <lolbject/TreeObject.h>
+#include <lolbject/SignalSender.h>
 
 #include <stdio.h>
 #include <assert.h>
@@ -49,6 +50,8 @@ int main(int argc, char** argv)
 	struct Number* tree_child_1 = lolbj_send_message(lolbj_send_message(tree, "allocChild", Number), "initWithInt", 42);
 	struct String* tree_child_2 = lolbj_send_message(lolbj_send_message(tree, "allocChild", String), "initWithString", "Hello world");
 
+	struct TreeObject* sub_tree_1 = lolbj_send_message(lolbj_send_message(tree, "allocChild", TreeObject), "init");
+
 	assert(tree_child_1);
 	assert(tree_child_2);
 
@@ -65,6 +68,15 @@ int main(int argc, char** argv)
 
 	struct String* stringDescription = lolbj_send_message(name, "description");
 	struct String* numberDescription = lolbj_send_message(length, "description");
+
+	struct SignalSender* s = lolbj_send_message(lolbj_send_message(SignalSender, "alloc"), "init");
+
+	lolbj_send_message(s, "connect", "void_method", format, "description");
+	lolbj_send_message(s, "connect", "void_method", format, "description");
+
+	lolbj_send_message(s, "emit", "void_method"); //, STRING("Manoel"), STRING("Munich"), STRING("Lalaland"), NULL);
+
+	RELEASE(s);
 
 	struct LolModule* mixinExampleModule;
 	

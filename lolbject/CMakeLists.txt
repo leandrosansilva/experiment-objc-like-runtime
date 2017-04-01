@@ -8,6 +8,7 @@ set(lolbject_runtime
 	MutableArray.c
 	DefaultAllocator.c
 	TreeObject.c
+	SignalSender.c
 )
 
 add_library(

@@ -21,6 +21,7 @@
 #include "MutableArray.h"
 #include "DefaultAllocator.h"
 #include "TreeObject.h"
+#include "SignalSender.h"
 #include "macros.h"
 
 #define XDOT "xdot -"
@@ -117,8 +118,6 @@ static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime
 
 	return NULL;
 }
-
-
 
 static struct LolModule* lol_runtime_core_module_selector(struct LolRuntime* self, va_list arguments)
 {
@@ -347,6 +346,13 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor signalSenderDescriptor = {
+		.name = "SignalSender",
+		.version = 1,
+		.initializer = lolbj_signalsender_initializer,
+		.unloader = NULL
+	};
+
 	static struct LolModule_Descriptor coreDescriptor = {
 		.version = 1,
 		.name = "core",
@@ -374,6 +380,7 @@ void lolbj_init_runtime()
 	MutableArray = lolbj_register_class_with_descriptor(coreModule, &mutableArrayDescriptor);
 	Array = lolbj_register_class_with_descriptor(coreModule, &arrayDescriptor);
 	TreeObject = lolbj_register_class_with_descriptor(coreModule, &treeObjectDescriptor);
+	SignalSender = lolbj_register_class_with_descriptor(coreModule, &signalSenderDescriptor);
 
 	lolbj_register_module(coreModule);
 }
