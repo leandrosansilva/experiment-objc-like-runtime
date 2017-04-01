@@ -21,36 +21,36 @@ int main(int argc, char** argv)
 	//lolbj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
-		struct LolModule* module = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING(argv[i]));
+		struct LolModule* module = LOL(LolRuntime, "loadModuleFromFile", STRING(argv[i]));
 
 		if (module) {
-			lolbj_send_message(LolRuntime, "registerModule", module);
+			LOL(LolRuntime, "registerModule", module);
 			lolbj_print_class_diagram();
 		}
 	}
 
 	struct String* name = STRING("Leandro");
 	
-	struct Number* length = lolbj_send_message(name, "length");
+	struct Number* length = LOL(name, "length");
 
-	struct Box* lengthValue = lolbj_send_message(length, "boxedValue");
+	struct Box* lengthValue = LOL(length, "boxedValue");
 
-	struct Box* nameValue = lolbj_send_message(name, "boxedValue");
+	struct Box* nameValue = LOL(name, "boxedValue");
 
 	struct Object* nameValueCaller = RETAIN(lolbj_get_object_property(nameValue, "caller"));
 
 	struct Array* names = ARRAY(RETAIN(length), STRING("Maria"), RETAIN(name), String);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(0)) == length);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(2)) == name);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(3)) == String);
-	assert(lolbj_send_message(names, "objectAtIndex", INT(4)) == NULL);
+	assert(LOL(names, "objectAtIndex", INT(0)) == length);
+	assert(LOL(names, "objectAtIndex", INT(2)) == name);
+	assert(LOL(names, "objectAtIndex", INT(3)) == String);
+	assert(LOL(names, "objectAtIndex", INT(4)) == NULL);
 	RELEASE(names);
 
-	struct TreeObject* tree = lolbj_send_message(lolbj_send_message(TreeObject, "alloc"), "init");
-	struct Number* tree_child_1 = lolbj_send_message(lolbj_send_message(tree, "allocChild", Number), "initWithInt", 42);
-	struct String* tree_child_2 = lolbj_send_message(lolbj_send_message(tree, "allocChild", String), "initWithString", "Hello world");
+	struct TreeObject* tree = LOL(LOL(TreeObject, "alloc"), "init");
+	struct Number* tree_child_1 = LOL(LOL(tree, "allocChild", Number), "initWithInt", 42);
+	struct String* tree_child_2 = LOL(LOL(tree, "allocChild", String), "initWithString", "Hello world");
 
-	struct TreeObject* sub_tree_1 = lolbj_send_message(lolbj_send_message(tree, "allocChild", TreeObject), "init");
+	struct TreeObject* sub_tree_1 = LOL(LOL(tree, "allocChild", TreeObject), "init");
 
 	assert(tree_child_1);
 	assert(tree_child_2);
@@ -64,32 +64,30 @@ int main(int argc, char** argv)
 
 	struct String* format = STRING("Name: %@, length: %@");
 
-	struct String* formattedString = lolbj_send_message(lolbj_send_message(String, "alloc"), "initWithFormat", format, name, length); 
+	struct String* formattedString = LOL(LOL(String, "alloc"), "initWithFormat", format, name, length); 
 
-	struct String* stringDescription = lolbj_send_message(name, "description");
-	struct String* numberDescription = lolbj_send_message(length, "description");
+	struct String* stringDescription = LOL(name, "description");
+	struct String* numberDescription = LOL(length, "description");
 
-	struct SignalSender* s = lolbj_send_message(lolbj_send_message(SignalSender, "alloc"), "init");
+	struct SignalSender* s = LOL(LOL(SignalSender, "alloc"), "init");
 
-	lolbj_send_message(s, "connect", "void_method", format, "description");
-	lolbj_send_message(s, "connect", "void_method", format, "description");
-
-	lolbj_send_message(s, "emit", "void_method"); //, STRING("Manoel"), STRING("Munich"), STRING("Lalaland"), NULL);
+	LOL_CONNECT(s, "void_method", format, "description");
+	LOL_EMIT(s, "void_method");
 
 	RELEASE(s);
 
 	struct LolModule* mixinExampleModule;
 	
-	if (mixinExampleModule = lolbj_send_message(LolRuntime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
-		struct Lolbject* c = lolbj_send_message(lolbj_send_message(lolbj_send_message(mixinExampleModule, "classWithName", STRING("ClassC")), "alloc"), "init");
+	if (mixinExampleModule = LOL(LolRuntime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
+		struct Lolbject* c = LOL(LOL(LOL(mixinExampleModule, "classWithName", STRING("ClassC")), "alloc"), "init");
 
-		struct Lolbject* d = lolbj_send_message(lolbj_send_message(lolbj_send_message(mixinExampleModule, "classWithName", STRING("ClassD")), "alloc"), "initWithName", STRING("Lalalala"));
+		struct Lolbject* d = LOL(LOL(LOL(mixinExampleModule, "classWithName", STRING("ClassD")), "alloc"), "initWithName", STRING("Lalalala"));
 
-		lolbj_send_message(c, "helloFromA");
-		lolbj_send_message(c, "helloFromB");
+		LOL(c, "helloFromA");
+		LOL(c, "helloFromB");
 
 		// must be the implementation in D
-		lolbj_send_message(d, "helloFromA");
+		LOL(d, "helloFromA");
 
 		assert(lolbj_cast(Lolbject, format) == format);
 		assert(lolbj_cast(Number, format) == NULL);
