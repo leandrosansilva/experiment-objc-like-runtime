@@ -22,6 +22,7 @@
 #include "DefaultAllocator.h"
 #include "TreeObject.h"
 #include "SignalSender.h"
+#include "Anonymous.h"
 #include "macros.h"
 
 #define XDOT "xdot -"
@@ -317,6 +318,12 @@ void lolbj_init_runtime()
 		.unloader = NULL
 	};
 
+	static struct LolClass_Descriptor anonymousDescriptor = {
+		.name = "Anonymous",
+		.version = 1,
+		.initializer = lolbj_anonymous_initializer,
+		.unloader = NULL
+	};
 
 	static struct LolClass_Descriptor runtimeDescriptor = {
 		.name = "LolRuntime",
@@ -381,6 +388,7 @@ void lolbj_init_runtime()
 	Array = lolbj_register_class_with_descriptor(coreModule, &arrayDescriptor);
 	TreeObject = lolbj_register_class_with_descriptor(coreModule, &treeObjectDescriptor);
 	SignalSender = lolbj_register_class_with_descriptor(coreModule, &signalSenderDescriptor);
+	Anonymous = lolbj_register_class_with_descriptor(coreModule, &anonymousDescriptor);
 
 	lolbj_register_module(coreModule);
 }

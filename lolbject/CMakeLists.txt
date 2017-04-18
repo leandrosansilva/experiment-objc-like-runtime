@@ -9,6 +9,7 @@ set(lolbject_runtime
 	DefaultAllocator.c
 	TreeObject.c
 	SignalSender.c
+	Anonymous.c
 )
 
 add_library(
