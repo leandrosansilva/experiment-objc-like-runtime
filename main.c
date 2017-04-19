@@ -14,13 +14,20 @@
 
 static struct Lolbject* anon_1_execute_selector(struct Lolbject* context, va_list arguments)
 {
-	printf("Call anonymous object with context of type %s\n", lolbj_class_name(lolbj_class_for_object(context)));
+	printf("Call anonymous object 1 with context of type %s\n", lolbj_class_name(lolbj_class_for_object(context)));
 
 	struct String* param = va_arg(arguments, struct String*);
 
-	RELEASE(param);
-
 	return INT(42);
+}
+
+static struct Lolbject* anon_2_execute_selector(struct Lolbject* context, va_list arguments)
+{
+	printf("Call anonymous object 2 with context of type %s\n", lolbj_class_name(lolbj_class_for_object(context)));
+
+	struct String* param = va_arg(arguments, struct String*);
+
+	return ARRAY(INT(10), INT(11), INT(13));
 }
 
 int main(int argc, char** argv)
@@ -40,13 +47,6 @@ int main(int argc, char** argv)
 			lolbj_print_class_diagram();
 		}
 	}
-
-	struct Anon* anonymous1 = LOL(LOL(Anonymous, "alloc"), "initWithContextAndSelector", STRING("My Name"), anon_1_execute_selector);
-
-	struct Lolbject* r = LOL(anonymous1, "execute", STRING("Some Param"));
-
-	RELEASE(r);
-	RELEASE(anonymous1);
 
 	struct String* name = STRING("Leandro");
 
@@ -90,10 +90,18 @@ int main(int argc, char** argv)
 
 	struct SignalSender* s = LOL(LOL(SignalSender, "alloc"), "init");
 
-	LOL_CONNECT(s, "void_method", format, "description");
-	LOL_EMIT(s, "void_method");
+	struct Anon* anonymous1 = LOL(LOL(Anonymous, "alloc"), "initWithContextAndSelector", STRING("My Name"), anon_1_execute_selector);
+
+	struct Anon* anonymous2 = LOL(LOL(Anonymous, "alloc"), "initWithContextAndSelector", ARRAY(INT(56)), anon_2_execute_selector);
+
+	LOL_CONNECT(s, "unary_signal", anonymous1, "execute");
+	LOL_CONNECT(s, "unary_signal", anonymous2, "execute");
+	struct MutableArray* result = LOL_EMIT(s, "unary_signal", numberDescription);
 
 	RELEASE(s);
+	RELEASE(anonymous1);
+	RELEASE(anonymous2);
+	RELEASE(result);
 
 	struct LolModule* mixinExampleModule;
 	

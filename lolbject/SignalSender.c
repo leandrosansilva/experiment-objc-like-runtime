@@ -61,15 +61,10 @@ static struct SignalSender* init_selector(struct SignalSender* self, va_list arg
 	return self;
 }
 
-static struct Lolbject* signal_test(struct SignalSender* self, va_list arguments)
-{
-	size_t n = lolbj_number_of_call_arguments_ending_on_null(arguments);
-	printf("nnumber of arguments after: %zu!\n", n);
-	return self;
-}
-
 static struct Lolbject* send_signal_selector(struct SignalSender* self, va_list arguments)
 {
+	struct MutableArray* result = lolbj_send_message(lolbj_send_message(MutableArray, "alloc"), "init");
+
 	const char* signal_name = va_arg(arguments, const char*);
 
 	for (size_t i = 0; i < self->connectors_length; i++) {
@@ -82,11 +77,12 @@ static struct Lolbject* send_signal_selector(struct SignalSender* self, va_list 
 
 		va_list arguments_tail;
 		va_copy(arguments_tail, arguments);
-		lolbj_send_message_with_arguments(receiver, slot_name, arguments_tail);
+		struct Lolbject* v = lolbj_send_message_with_arguments(receiver, slot_name, arguments_tail);
+		lolbj_send_message(result, "append", v);
 		va_end(arguments_tail);
 	}
 
-	return self;
+	return result;
 }
 
 static struct Lolbject* dealloc_selector(struct SignalSender* self, va_list arguments)
