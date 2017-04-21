@@ -58,5 +58,5 @@ void lolbj_class_d_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "dealloc", dealloc_selector);
 	lolbj_add_selector(klass, "helloFromA", hello_from_a_selector);
 
-	lolbj_add_property(klass, "name", String, offsetof(struct ClassD, name));
+	lolbj_add_property(klass, "name", String, offsetof(struct ClassD, name), NULL);
 }

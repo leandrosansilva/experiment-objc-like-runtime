@@ -42,9 +42,6 @@ void lolbj_class_c_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "init", init_selector);
 	lolbj_add_selector(klass, "dealloc", dealloc_selector);
 
-	lolbj_add_property(klass, "a", ClassA, offsetof(struct ClassC, a));
-	lolbj_add_property(klass, "b", ClassB, offsetof(struct ClassC, b));
-
-	lolbj_add_selector_from_property(klass, ClassA, "a", "helloFromA");
-	lolbj_add_selector_from_property(klass, ClassB, "b", "helloFromB");
+	lolbj_add_property(klass, "a", ClassA, offsetof(struct ClassC, a), "helloFromA", NULL);
+	lolbj_add_property(klass, "b", ClassB, offsetof(struct ClassC, b), "helloFromB", NULL);
 }

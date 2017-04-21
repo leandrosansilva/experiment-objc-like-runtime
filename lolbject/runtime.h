@@ -73,8 +73,6 @@ bool lolbj_object_is_class(struct Lolbject* object);
 struct Lolbject* lolbj_get_object_property(struct Lolbject* object, const char* propertyName);
 struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* propertyName, struct Lolbject* value);
 
-void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset);
-
-void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* memberName, const char* selectorName); 
+void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset, ...);
 
 struct Lolbject* lolbj_cast(struct LolClass* klass, struct Lolbject* obj);

@@ -27,7 +27,7 @@ static struct Lolbject* anon_2_execute_selector(struct Lolbject* context, va_lis
 
 	struct String* param = va_arg(arguments, struct String*);
 
-	return ARRAY(INT(10), INT(11), INT(13));
+	return ARRAY(INT(10), INT(11), INT(13), RETAIN(param));
 }
 
 int main(int argc, char** argv)

@@ -47,5 +47,5 @@ void lolbj_box_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "initWithValue", init_with_value);
 	lolbj_add_selector(klass, "dealloc", dealloc_selector);
 
-	lolbj_add_property(klass, "caller", Lolbject, offsetof(struct Box, caller));
+	lolbj_add_property(klass, "caller", Lolbject, offsetof(struct Box, caller), NULL);
 }

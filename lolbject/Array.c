@@ -55,9 +55,7 @@ void lolbj_array_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 
-	lolbj_add_property(klass, "storage", MutableArray, offsetof(struct Array, array));
-	lolbj_add_selector_from_property(klass, MutableArray, "storage", "length");
-	lolbj_add_selector_from_property(klass, MutableArray, "storage", "objectAtIndex");
+	lolbj_add_property(klass, "storage", MutableArray, offsetof(struct Array, array), "length", "objectAtIndex", NULL);
 
 	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 	lolbj_add_class_selector(klass, "arrayWithElements", array_with_elements_selector);

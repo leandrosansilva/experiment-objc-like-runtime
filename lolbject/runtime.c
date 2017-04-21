@@ -734,16 +734,7 @@ struct Lolbject* lolbj_set_object_property(struct Lolbject* object, const char* 
 	return object;
 }
 
-void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset)
-{
-	klass->priv->properties.properties[klass->priv->properties.size++] = (struct LolbjectPropertyPair){
-		.name = propertyName,
-		.offset = offset,
-		.klass = type
-	};
-}
-
-void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
+static void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* memberClass, const char* propertyName, const char* selectorName)
 {
 	struct SelectorPair selectorPair = privSelectorPairForSelectorName(memberClass, selectorName);
 
@@ -752,6 +743,23 @@ void lolbj_add_selector_from_property(struct LolClass* klass, struct LolClass* m
 	}
 
 	privAddSelector(klass, selectorName, propertyName, selectorPair.selector);
+}
+
+void lolbj_add_property(struct LolClass* klass, const char* propertyName, struct LolClass* type, size_t offset, ...)
+{
+	klass->priv->properties.properties[klass->priv->properties.size++] = (struct LolbjectPropertyPair){
+		.name = propertyName,
+		.offset = offset,
+		.klass = type
+	};
+
+	va_list arguments;
+	va_start(arguments, offset);
+	const char* propertySelectorName = NULL;
+	while (propertySelectorName = va_arg(arguments, const char*)) {
+		lolbj_add_selector_from_property(klass, type, propertyName, propertySelectorName);
+	}
+	va_end(arguments);
 }
 
 static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass)
