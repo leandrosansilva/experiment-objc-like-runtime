@@ -1,5 +1,7 @@
 #pragma once
 
+#include <lolbject/api.h>
+
 struct Lolbject_Private;
 struct LolClass;
 
@@ -9,6 +11,6 @@ struct Lolbject
 	struct Lolbject_Private* priv;
 };
 
-struct LolClass* Lolbject;
+LOL_EXPORT struct LolClass* Lolbject;
 
 void lolbj_object_initializer(struct LolClass* klass);

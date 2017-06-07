@@ -4,4 +4,4 @@
 
 void lolbj_number_initializer(struct LolClass* klass);
 
-struct LolClass* Number;
+LOL_EXPORT struct LolClass* Number;

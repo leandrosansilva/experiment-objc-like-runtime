@@ -26,6 +26,8 @@
 #include "macros.h"
 
 #define XDOT "xdot -"
+#define XDOT "cat"
+//#define XDOT "dot -Tpng -Ooutput"
 
 struct SelectorPair {
 	const char* name; // TODO: do not use pointers, but contiguous memory
@@ -118,6 +120,18 @@ static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime
 	RELEASE(moduleNameObj);
 
 	return NULL;
+}
+
+static struct LolClass* lol_runtime_class_by_name_selector(struct LolRuntime* self, va_list arguments)
+{
+	// TODO: load modules on demand based on the query
+	struct String* moduleName = va_arg(arguments, struct String*);
+	struct String* className = va_arg(arguments, struct String*);
+
+	struct LolModule* module = lolbj_send_message(self, "moduleWithName", moduleName);
+	struct LolClass* klass = lolbj_send_message(module, "classWithName", className);
+
+	return klass;
 }
 
 static struct LolModule* lol_runtime_core_module_selector(struct LolRuntime* self, va_list arguments)
@@ -237,6 +251,7 @@ static void lolbj_runtime_initializer(struct LolClass* klass)
 	lolbj_add_class_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
 	lolbj_add_class_selector(klass, "moduleWithName", lol_runtime_module_with_name_selector);
 	lolbj_add_class_selector(klass, "coreModule", lol_runtime_core_module_selector);
+	lolbj_add_class_selector(klass, "classByModuleAndName", lol_runtime_class_by_name_selector);
 	lolbj_add_class_selector(klass, "registerModule", lol_runtime_register_module_selector);
 	lolbj_add_class_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
 }
@@ -447,22 +462,28 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 
 	fprintf(p, "}\"\n  ]\n");
 
-	fprintf(p, "  class_addr_%lld -> class_addr_%lld [style=\"dotted\" arrowhead=\"open\"]\n",
+	fprintf(p, "  class_addr_%lld -> class_addr_%lld [style=\"dotted\" arrowhead=\"open\"] // %s -> %s\n",
 			(unsigned long long)klass,
-			(unsigned long long)lolbj_class_for_object(klass));
+			(unsigned long long)lolbj_class_for_object(klass),
+			lolbj_class_name(klass),
+			lolbj_class_name(lolbj_class_for_object(klass)));
 	
 	for (size_t i = 0; i < klass->priv->properties.size; i++) {
 		struct LolClass* memberClass = klass->priv->properties.properties[i].klass;	
-		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back]\n",
+		fprintf(p, "  class_addr_%lld -> class_addr_%lld [arrowtail = \"odiamond\", dir=back] // %s -> %s\n",
 			(unsigned long long)klass,
-			(unsigned long long)memberClass);
+			(unsigned long long)memberClass,
+			lolbj_class_name(klass),
+			lolbj_class_name(memberClass));
 	}
 
 	if (lolbj_class_parent(klass) != NULL) {
 		// The inheritance arrow
-		fprintf(p, "  class_addr_%lld -> class_addr_%lld [dir=\"back\" arrowtail = \"empty\"]\n",
+		fprintf(p, "  class_addr_%lld -> class_addr_%lld [dir=\"back\" arrowtail = \"empty\"] // %s -> %s\n",
 			(unsigned long long)lolbj_class_parent(klass),
-			(unsigned long long)klass);
+			(unsigned long long)klass,
+			lolbj_class_name(lolbj_class_parent(klass)),
+			lolbj_class_name(klass));
 	}
 }
 

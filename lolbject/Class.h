@@ -9,3 +9,5 @@ struct LolClass
 	struct Lolbject proto;
 	struct LolClass_Private* priv;
 };
+
+LOL_EXPORT struct LolClass* Class;

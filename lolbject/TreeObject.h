@@ -4,4 +4,4 @@
 
 void lolbj_treeobject_initializer(struct LolClass* klass);
 
-struct LolClass* TreeObject;
+LOL_EXPORT struct LolClass* TreeObject;

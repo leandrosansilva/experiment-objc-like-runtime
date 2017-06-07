@@ -4,4 +4,4 @@
 
 void lolbj_anonymous_initializer(struct LolClass* klass);
 
-struct LolClass* Anonymous;
+LOL_EXPORT struct LolClass* Anonymous;

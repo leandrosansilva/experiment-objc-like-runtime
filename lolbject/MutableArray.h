@@ -4,4 +4,4 @@
 
 void lolbj_mutablearray_initializer(struct LolClass* klass);
 
-struct LolClass* MutableArray;
+LOL_EXPORT struct LolClass* MutableArray;

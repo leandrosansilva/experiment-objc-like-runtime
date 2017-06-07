@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <string.h>
 
+struct LolClass* DefaultAllocator;
+
 struct DefaultAllocator
 {
 	struct Lolbject super;

@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 static struct Lolbject* anon_1_execute_selector(struct Lolbject* context, va_list arguments)
 {
@@ -46,6 +47,12 @@ int main(int argc, char** argv)
 			LOL(LolRuntime, "registerModule", module);
 			lolbj_print_class_diagram();
 		}
+	}
+
+	{
+		struct LolClass* k = LOL(LolRuntime, "classByModuleAndName", STRING("core"), STRING("Array"));
+		const char* name = lolbj_class_name(k);
+        assert(strcmp(name, "Array") == 0);
 	}
 
 	struct String* name = STRING("Leandro");

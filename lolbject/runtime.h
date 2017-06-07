@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lolbject/api.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,11 +10,10 @@ struct Lolbject;
 struct LolClass;
 struct LolModule;
 
-struct LolClass* Class;
-struct LolClass* LolModule;
-struct LolClass* LolRuntime;
-struct LolClass* LolModule;
-struct LolClass* Lolbject;
+LOL_EXPORT struct LolClass* LolModule;
+LOL_EXPORT struct LolClass* LolRuntime;
+LOL_EXPORT struct LolClass* LolModule;
+LOL_EXPORT struct LolClass* Lolbject;
 
 struct LolClass_Descriptor;
 

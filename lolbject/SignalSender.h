@@ -4,4 +4,4 @@
 
 void lolbj_signalsender_initializer(struct LolClass* klass);
 
-struct LolClass* SignalSender;
+LOL_EXPORT struct LolClass* SignalSender;

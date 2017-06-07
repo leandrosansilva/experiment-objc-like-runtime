@@ -3,6 +3,6 @@
 #include <lolbject/Class.h>
 #include <lolbject/Lolbject.h>
 
-struct LolClass* String;
+LOL_EXPORT struct LolClass* String;
 
 void lolbj_string_initializer(struct LolClass* klass);
