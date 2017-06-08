@@ -26,7 +26,7 @@
 #include "macros.h"
 
 #define XDOT "xdot -"
-#define XDOT "cat"
+//#define XDOT "cat"
 //#define XDOT "dot -Tpng -Ooutput"
 
 struct SelectorPair {
@@ -61,6 +61,7 @@ struct LolClass_Private
 	struct LolbjectSelectors selectors;
 	struct LolbjectProperties properties;
 	struct LolClass_Descriptor* descriptor;
+	struct LolModule* module;
 };
 
 struct LolClass* Class;
@@ -120,6 +121,11 @@ static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime
 	RELEASE(moduleNameObj);
 
 	return NULL;
+}
+
+static struct LolModule* get_module_selector(struct LolClass* klass, va_list arguments)
+{
+	return klass->priv->module;
 }
 
 static struct LolClass* lol_runtime_class_by_name_selector(struct LolRuntime* self, va_list arguments)
@@ -282,6 +288,14 @@ static void lolbj_runtime_initializer(struct LolClass* klass);
 
 static void lolbj_class_initializer(struct LolClass* klass);
 
+static void privAddSelector(struct LolClass* klass, const char* selectorName, const char* propertyName, lolbj_selector selector);
+
+static void lolbj_object_initializer_wrapper(struct LolClass* klass)
+{
+	lolbj_object_initializer(klass);
+	privAddSelector(lolbj_class_for_object(klass), "module", NULL, get_module_selector);
+}
+
 void lolbj_init_runtime()
 {
 	static struct LolClass_Descriptor classDescriptor = {
@@ -294,7 +308,7 @@ void lolbj_init_runtime()
 	static struct LolClass_Descriptor objectDescriptor = {
 		.name = "Lolbject",
 		.version = 1,
-		.initializer = lolbj_object_initializer,
+		.initializer = lolbj_object_initializer_wrapper,
 		.unloader = NULL
 	};
 
@@ -389,6 +403,12 @@ void lolbj_init_runtime()
 	LolModule = privCreateClass(&lolModuleDescriptor, true);
 
 	coreModule = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &coreDescriptor);
+
+	Class->priv->module = coreModule;
+	Lolbject->priv->module = coreModule;
+	DefaultAllocator->priv->module = coreModule;
+	LolRuntime->priv->module = coreModule;
+	LolModule->priv->module = coreModule;
 
 	coreModule->classes.classes[coreModule->classes.size++] = Class;
 	coreModule->classes.classes[coreModule->classes.size++] = Lolbject;
@@ -808,6 +828,8 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 	struct LolClass* klass = privCreateClass(descriptor, isNormalClass);
 
 	module->classes.classes[module->classes.size++] = klass;
+
+	klass->priv->module = module;
 
 	return klass;
 }

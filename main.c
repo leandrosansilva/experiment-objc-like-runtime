@@ -52,7 +52,10 @@ int main(int argc, char** argv)
 	{
 		struct LolClass* k = LOL(LolRuntime, "classByModuleAndName", STRING("core"), STRING("Array"));
 		const char* name = lolbj_class_name(k);
-        assert(strcmp(name, "Array") == 0);
+		assert(strcmp(name, "Array") == 0);
+		struct LolModule* km = LOL(k, "module");
+		struct LolModule* m = LOL(LolRuntime, "coreModule");
+		assert(km == m);
 	}
 
 	struct String* name = STRING("Leandro");
