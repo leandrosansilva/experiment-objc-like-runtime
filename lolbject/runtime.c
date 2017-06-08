@@ -78,12 +78,15 @@ struct LolModule_List
 	size_t size;
 };
 
+struct LolRuntime;
+
 struct LolModule
 {
 	struct Lolbject super;
 	struct LolModule_Descriptor* descriptor;
 	struct LolClass_List classes;
 	void* handler;
+	struct LolRuntime* runtime;
 };
 
 struct LolRuntime {
@@ -99,7 +102,14 @@ static struct LolModule_List registred_modules;
 
 static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
 {
-	return lolbj_send_message_with_arguments(lolbj_send_message(LolModule, "alloc"), "initWithDescriptor", arguments);
+	struct LolModule* module = lolbj_send_message_with_arguments(lolbj_send_message(LolModule, "alloc"), "initWithDescriptor", arguments);
+
+	// Agh!!!!!, small hack to prevent change in the API. It looks dirty, I know
+	if (module != NULL) {
+		module->runtime = self;
+	}
+
+	return module;
 }
 
 static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime* self, va_list arguments)
@@ -182,6 +192,7 @@ static struct LolModule* lol_runtime_load_module_from_file_selector(struct LolRu
 	// based on compatibility issues
 	struct LolModule* module = init_module();
 	module->handler = handler;
+	module->runtime = self;
 
 	RELEASE(filenameBox);
 	RELEASE(filename);
@@ -251,6 +262,11 @@ static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_
 		: lolbj_send_message_to_super(self, LolModule, "dealloc");
 }
 
+static struct LolModule* lol_module_get_runtime_selector(struct LolModule* self, va_list arguments)
+{
+	return self->runtime;
+}
+
 static void lolbj_runtime_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
@@ -278,6 +294,7 @@ static void lolbj_module_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "initWithDescriptor", lol_module_init_with_descriptor);
 	lolbj_add_selector(klass, "classWithName", lol_module_class_with_name_selector);
 	lolbj_add_selector(klass, "dealloc", lol_module_dealloc_selector);
+	lolbj_add_selector(klass, "runtime", lol_module_get_runtime_selector);
 }
 
 static struct LolClass* privRegisterClass(struct LolModule* module, struct LolClass_Descriptor *descriptor, bool isNormalClass);

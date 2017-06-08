@@ -56,6 +56,8 @@ int main(int argc, char** argv)
 		struct LolModule* km = LOL(k, "module");
 		struct LolModule* m = LOL(LolRuntime, "coreModule");
 		assert(km == m);
+		struct LolRuntime* r = LOL(m, "runtime");
+		assert(r == LolRuntime);
 	}
 
 	struct String* name = STRING("Leandro");
@@ -113,9 +115,18 @@ int main(int argc, char** argv)
 	RELEASE(anonymous2);
 	RELEASE(result);
 
+	assert(lolbj_cast(Lolbject, format) == format);
+	assert(lolbj_cast(Number, format) == NULL);
+	assert(lolbj_cast(Number, NULL) == NULL);
+	assert(lolbj_cast(NULL, format) == format);
+	assert(lolbj_cast(NULL, NULL) == NULL);
+
 	struct LolModule* mixinExampleModule;
 	
 	if (mixinExampleModule = LOL(LolRuntime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
+		struct LolRuntime* r = LOL(mixinExampleModule, "runtime");
+		assert(r == LolRuntime);
+
 		struct Lolbject* c = LOL(LOL(LOL(mixinExampleModule, "classWithName", STRING("ClassC")), "alloc"), "init");
 
 		struct Lolbject* d = LOL(LOL(LOL(mixinExampleModule, "classWithName", STRING("ClassD")), "alloc"), "initWithName", STRING("Lalalala"));
@@ -125,12 +136,6 @@ int main(int argc, char** argv)
 
 		// must be the implementation in D
 		LOL(d, "helloFromA");
-
-		assert(lolbj_cast(Lolbject, format) == format);
-		assert(lolbj_cast(Number, format) == NULL);
-		assert(lolbj_cast(Number, NULL) == NULL);
-		assert(lolbj_cast(NULL, format) == format);
-		assert(lolbj_cast(NULL, NULL) == NULL);
 
 		RELEASE(c);
 		RELEASE(d);
