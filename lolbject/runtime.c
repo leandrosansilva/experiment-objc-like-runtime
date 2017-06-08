@@ -95,8 +95,12 @@ struct LolRuntime {
 	struct LolModule_List modules;
 };
 
-struct LolClass* LolRuntime;
-struct LolClass* LolModule;
+static struct LolRuntime* lol_runtime_object_size_selector(struct Lolbject* self, va_list arguments)
+{
+	size_t* size = va_arg(arguments, size_t*);
+	*size = sizeof(struct LolRuntime);
+	return NULL;
+}
 
 static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
 {
@@ -131,7 +135,7 @@ static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime
 	return NULL;
 }
 
-static struct LolModule* get_module_selector(struct LolClass* klass, va_list arguments)
+static struct LolModule* lol_class_get_module_selector(struct LolClass* klass, va_list arguments)
 {
 	return klass->priv->module;
 }
@@ -272,12 +276,13 @@ static struct LolModule* lol_module_get_runtime_selector(struct LolModule* self,
 static void lolbj_runtime_initializer(struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
-	lolbj_add_class_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
-	lolbj_add_class_selector(klass, "moduleWithName", lol_runtime_module_with_name_selector);
-	lolbj_add_class_selector(klass, "coreModule", lol_runtime_core_module_selector);
-	lolbj_add_class_selector(klass, "classByModuleAndName", lol_runtime_class_by_name_selector);
-	lolbj_add_class_selector(klass, "registerModule", lol_runtime_register_module_selector);
-	lolbj_add_class_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
+	lolbj_add_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
+	lolbj_add_selector(klass, "objectSize", lol_runtime_object_size_selector);
+	lolbj_add_selector(klass, "moduleWithName", lol_runtime_module_with_name_selector);
+	lolbj_add_selector(klass, "coreModule", lol_runtime_core_module_selector);
+	lolbj_add_selector(klass, "classByModuleAndName", lol_runtime_class_by_name_selector);
+	lolbj_add_selector(klass, "registerModule", lol_runtime_register_module_selector);
+	lolbj_add_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
 }
 
 static struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
@@ -312,7 +317,7 @@ static void privAddSelector(struct LolClass* klass, const char* selectorName, co
 static void lolbj_object_initializer_wrapper(struct LolClass* klass)
 {
 	lolbj_object_initializer(klass);
-	privAddSelector(lolbj_class_for_object(klass), "module", NULL, get_module_selector);
+	privAddSelector(lolbj_class_for_object(klass), "module", NULL, lol_class_get_module_selector);
 }
 
 struct LolRuntime* lolbj_init_runtime()
@@ -415,40 +420,46 @@ struct LolRuntime* lolbj_init_runtime()
 		.shutdown_module = NULL
 	};
 
-	struct LolRuntime* runtime = NULL;
-
 	Class = privCreateClass(&classDescriptor, false);
 	Lolbject = privCreateClass(&objectDescriptor, true);
 	DefaultAllocator = privCreateClass(&defaultAllocatorDescriptor, true);
-	LolRuntime = privCreateClass(&runtimeDescriptor, true);
+	struct LolClass* runtimeClass = privCreateClass(&runtimeDescriptor, true);
 	LolModule = privCreateClass(&lolModuleDescriptor, true);
 
-	runtime->coreModule = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &coreDescriptor);
+	struct LolRuntime* runtime = lolbj_send_message(lolbj_send_message(runtimeClass, "alloc"), "init");
+
+	assert(runtime != NULL);
+
+	runtime->coreModule = lolbj_send_message(runtime, "createModuleWithDescriptor", &coreDescriptor);
 
 	Class->priv->module = runtime->coreModule;
 	Lolbject->priv->module = runtime->coreModule;
 	DefaultAllocator->priv->module = runtime->coreModule;
-	LolRuntime->priv->module = runtime->coreModule;
+	runtimeClass->priv->module = runtime->coreModule;
 	LolModule->priv->module = runtime->coreModule;
 
-	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = Class;
-	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = Lolbject;
-	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = LolRuntime;
-	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = LolModule;
-	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = DefaultAllocator;
+#define ADD_CLASS(__klass__) runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = __klass__
+	ADD_CLASS(Class);
+	ADD_CLASS(Lolbject);
+	ADD_CLASS(runtimeClass);
+	ADD_CLASS(LolModule);
+	ADD_CLASS(DefaultAllocator);
+#undef ADD_CLASS
 
-	String = lolbj_register_class_with_descriptor(runtime->coreModule, &stringDescriptor);
-	Number = lolbj_register_class_with_descriptor(runtime->coreModule, &numberDescriptor);
-	Box = lolbj_register_class_with_descriptor(runtime->coreModule, &boxDescriptor);
-	MutableArray = lolbj_register_class_with_descriptor(runtime->coreModule, &mutableArrayDescriptor);
-	Array = lolbj_register_class_with_descriptor(runtime->coreModule, &arrayDescriptor);
-	TreeObject = lolbj_register_class_with_descriptor(runtime->coreModule, &treeObjectDescriptor);
-	SignalSender = lolbj_register_class_with_descriptor(runtime->coreModule, &signalSenderDescriptor);
-	Anonymous = lolbj_register_class_with_descriptor(runtime->coreModule, &anonymousDescriptor);
+#define REGISTER_CLASS(__klass__, __descriptor__) __klass__ = lolbj_register_class_with_descriptor(runtime->coreModule, &__descriptor__)
+	REGISTER_CLASS(String, stringDescriptor);
+	REGISTER_CLASS(Number, numberDescriptor);
+	REGISTER_CLASS(Box, boxDescriptor);
+	REGISTER_CLASS(MutableArray, mutableArrayDescriptor);
+	REGISTER_CLASS(Array, arrayDescriptor);
+	REGISTER_CLASS(TreeObject, treeObjectDescriptor);
+	REGISTER_CLASS(SignalSender, signalSenderDescriptor);
+	REGISTER_CLASS(Anonymous, anonymousDescriptor);
+#undef REGISTER_CLASS
 
 	lolbj_register_module(runtime, runtime->coreModule);
 
-	return LolRuntime;
+	return runtime;
 }
 
 static void privDeleteCoreModule(struct LolModule* module, ...)

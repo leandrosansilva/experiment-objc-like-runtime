@@ -10,9 +10,6 @@ struct Lolbject;
 struct LolClass;
 struct LolModule;
 
-LOL_EXPORT struct LolClass* LolModule;
-LOL_EXPORT struct LolClass* LolRuntime;
-LOL_EXPORT struct LolClass* LolModule;
 LOL_EXPORT struct LolClass* Lolbject;
 
 struct LolClass_Descriptor;

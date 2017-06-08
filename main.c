@@ -41,23 +41,23 @@ int main(int argc, char** argv)
 	//lolbj_print_class_diagram();
 
 	for (size_t i = 1; i < (size_t)argc; i++) {
-		struct LolModule* module = LOL(LolRuntime, "loadModuleFromFile", STRING(argv[i]));
+		struct LolModule* module = LOL(runtime, "loadModuleFromFile", STRING(argv[i]));
 
 		if (module) {
-			LOL(LolRuntime, "registerModule", module);
+			LOL(runtime, "registerModule", module);
 			lolbj_print_class_diagram(runtime);
 		}
 	}
 
 	{
-		struct LolClass* k = LOL(LolRuntime, "classByModuleAndName", STRING("core"), STRING("Array"));
+		struct LolClass* k = LOL(runtime, "classByModuleAndName", STRING("core"), STRING("Array"));
 		const char* name = lolbj_class_name(k);
 		assert(strcmp(name, "Array") == 0);
 		struct LolModule* km = LOL(k, "module");
-		struct LolModule* m = LOL(LolRuntime, "coreModule");
+		struct LolModule* m = LOL(runtime, "coreModule");
 		assert(km == m);
 		struct LolRuntime* r = LOL(m, "runtime");
-		assert(r == LolRuntime);
+		assert(r == runtime);
 	}
 
 	struct String* name = STRING("Leandro");
@@ -123,9 +123,9 @@ int main(int argc, char** argv)
 
 	struct LolModule* mixinExampleModule;
 	
-	if (mixinExampleModule = LOL(LolRuntime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
+	if (mixinExampleModule = LOL(runtime, "loadModuleFromFile", STRING("./mixin_example/libmixin_example.so"))) {
 		struct LolRuntime* r = LOL(mixinExampleModule, "runtime");
-		assert(r == LolRuntime);
+		assert(r == runtime);
 
 		struct Lolbject* c = LOL(LOL(LOL(mixinExampleModule, "classWithName", STRING("ClassC")), "alloc"), "init");
 
