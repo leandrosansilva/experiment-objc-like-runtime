@@ -50,11 +50,11 @@ struct Lolbject* lolbj_send_message_to_super(struct Lolbject* obj, struct LolCla
 struct Lolbject* lolbj_send_message_with_arguments(struct Lolbject* obj, const char* selectorName, va_list arguments);
 struct Lolbject* lolbj_send_message_to_super_with_arguments(struct Lolbject* obj, struct LolClass* klass, const char* selectorName, va_list arguments);
 
-void lolbj_init_runtime();
+struct LolRuntime* lolbj_init_runtime();
 
-void lolbj_shutdown_runtime();
+void lolbj_shutdown_runtime(struct LolRuntime* runtime);
 
-void lolbj_print_class_diagram();
+void lolbj_print_class_diagram(struct LolRuntime* runtime);
 
 void lolbj_set_class_parent(struct LolClass* klass, struct LolClass* parent);
 

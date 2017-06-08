@@ -91,14 +91,12 @@ struct LolModule
 
 struct LolRuntime {
 	struct Lolbject super;
+	struct LolModule* coreModule;
+	struct LolModule_List modules;
 };
 
 struct LolClass* LolRuntime;
 struct LolClass* LolModule;
-
-static struct LolModule* coreModule;
-
-static struct LolModule_List registred_modules;
 
 static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
 {
@@ -118,8 +116,8 @@ static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime
 	struct Box* moduleNameBox = lolbj_send_message(moduleNameObj, "boxedValue");
 	const char* moduleName = (const char*)moduleNameBox->value;
 
-	for (size_t i = 0; i < registred_modules.size; i++) {
-		struct LolModule* module = registred_modules.modules[i];
+	for (size_t i = 0; i < self->modules.size; i++) {
+		struct LolModule* module = self->modules.modules[i];
 		if (strcmp(module->descriptor->name, moduleName) == 0) {
 			RELEASE(moduleNameBox);
 			RELEASE(moduleNameObj);
@@ -152,15 +150,15 @@ static struct LolClass* lol_runtime_class_by_name_selector(struct LolRuntime* se
 
 static struct LolModule* lol_runtime_core_module_selector(struct LolRuntime* self, va_list arguments)
 {
-	return coreModule;
+	return self->coreModule;
 }
 
-static void lolbj_register_module(struct LolModule* module);
+static void lolbj_register_module(struct LolRuntime* runtime, struct LolModule* module);
 
 static struct LolRuntime* lol_runtime_register_module_selector(struct LolRuntime* self, va_list arguments)
 {
 	struct LolModule* module = va_arg(arguments, struct LolModule*);
-	lolbj_register_module(module);
+	lolbj_register_module(self, module);
 	return self;
 }
 
@@ -257,7 +255,11 @@ static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_
 		}
 	}
 
-	return self == coreModule
+	struct LolRuntime* runtime = lolbj_send_message(self, "runtime");
+
+	assert(runtime != NULL);
+
+	return self == runtime->coreModule
 		? NULL
 		: lolbj_send_message_to_super(self, LolModule, "dealloc");
 }
@@ -313,7 +315,7 @@ static void lolbj_object_initializer_wrapper(struct LolClass* klass)
 	privAddSelector(lolbj_class_for_object(klass), "module", NULL, get_module_selector);
 }
 
-void lolbj_init_runtime()
+struct LolRuntime* lolbj_init_runtime()
 {
 	static struct LolClass_Descriptor classDescriptor = {
 		.name = "Class",
@@ -413,36 +415,40 @@ void lolbj_init_runtime()
 		.shutdown_module = NULL
 	};
 
+	struct LolRuntime* runtime = NULL;
+
 	Class = privCreateClass(&classDescriptor, false);
 	Lolbject = privCreateClass(&objectDescriptor, true);
 	DefaultAllocator = privCreateClass(&defaultAllocatorDescriptor, true);
 	LolRuntime = privCreateClass(&runtimeDescriptor, true);
 	LolModule = privCreateClass(&lolModuleDescriptor, true);
 
-	coreModule = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &coreDescriptor);
+	runtime->coreModule = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &coreDescriptor);
 
-	Class->priv->module = coreModule;
-	Lolbject->priv->module = coreModule;
-	DefaultAllocator->priv->module = coreModule;
-	LolRuntime->priv->module = coreModule;
-	LolModule->priv->module = coreModule;
+	Class->priv->module = runtime->coreModule;
+	Lolbject->priv->module = runtime->coreModule;
+	DefaultAllocator->priv->module = runtime->coreModule;
+	LolRuntime->priv->module = runtime->coreModule;
+	LolModule->priv->module = runtime->coreModule;
 
-	coreModule->classes.classes[coreModule->classes.size++] = Class;
-	coreModule->classes.classes[coreModule->classes.size++] = Lolbject;
-	coreModule->classes.classes[coreModule->classes.size++] = LolRuntime;
-	coreModule->classes.classes[coreModule->classes.size++] = LolModule;
-	coreModule->classes.classes[coreModule->classes.size++] = DefaultAllocator;
+	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = Class;
+	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = Lolbject;
+	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = LolRuntime;
+	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = LolModule;
+	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = DefaultAllocator;
 
-	String = lolbj_register_class_with_descriptor(coreModule, &stringDescriptor);
-	Number = lolbj_register_class_with_descriptor(coreModule, &numberDescriptor);
-	Box = lolbj_register_class_with_descriptor(coreModule, &boxDescriptor);
-	MutableArray = lolbj_register_class_with_descriptor(coreModule, &mutableArrayDescriptor);
-	Array = lolbj_register_class_with_descriptor(coreModule, &arrayDescriptor);
-	TreeObject = lolbj_register_class_with_descriptor(coreModule, &treeObjectDescriptor);
-	SignalSender = lolbj_register_class_with_descriptor(coreModule, &signalSenderDescriptor);
-	Anonymous = lolbj_register_class_with_descriptor(coreModule, &anonymousDescriptor);
+	String = lolbj_register_class_with_descriptor(runtime->coreModule, &stringDescriptor);
+	Number = lolbj_register_class_with_descriptor(runtime->coreModule, &numberDescriptor);
+	Box = lolbj_register_class_with_descriptor(runtime->coreModule, &boxDescriptor);
+	MutableArray = lolbj_register_class_with_descriptor(runtime->coreModule, &mutableArrayDescriptor);
+	Array = lolbj_register_class_with_descriptor(runtime->coreModule, &arrayDescriptor);
+	TreeObject = lolbj_register_class_with_descriptor(runtime->coreModule, &treeObjectDescriptor);
+	SignalSender = lolbj_register_class_with_descriptor(runtime->coreModule, &signalSenderDescriptor);
+	Anonymous = lolbj_register_class_with_descriptor(runtime->coreModule, &anonymousDescriptor);
 
-	lolbj_register_module(coreModule);
+	lolbj_register_module(runtime, runtime->coreModule);
+
+	return LolRuntime;
 }
 
 static void privDeleteCoreModule(struct LolModule* module, ...)
@@ -455,7 +461,11 @@ static void privDeleteCoreModule(struct LolModule* module, ...)
 
 static void privDeleteModule(struct LolModule* module)
 {
-	if (module == coreModule) {
+	struct LolRuntime* runtime = lolbj_send_message(module, "runtime");
+
+	assert(runtime != NULL);
+
+	if (module == runtime->coreModule) {
 		privDeleteCoreModule(module);
 		return;
 	}
@@ -463,12 +473,12 @@ static void privDeleteModule(struct LolModule* module)
 	RELEASE(module);
 }
 
-void lolbj_shutdown_runtime()
+void lolbj_shutdown_runtime(struct LolRuntime* runtime)
 {
-	for (size_t i = registred_modules.size; i > 0; i--) {
-		struct LolModule* module = registred_modules.modules[i - 1];
+	for (size_t i = runtime->modules.size; i > 0; i--) {
+		struct LolModule* module = runtime->modules.modules[i - 1];
 		privDeleteModule(module);
-		registred_modules.modules[i - 1] = NULL;
+		runtime->modules.modules[i - 1] = NULL;
 	}
 }
 
@@ -524,7 +534,7 @@ static void print_diagram_for_class(FILE* p, struct LolClass* klass)
 	}
 }
 
-void lolbj_print_class_diagram()
+void lolbj_print_class_diagram(struct LolRuntime* runtime)
 {
 	FILE* p = popen(XDOT, "w");
 
@@ -545,8 +555,8 @@ void lolbj_print_class_diagram()
 "    fontname = \"Bitstream Vera Sans\"\n"
 "    fontsize = 8\n"
 "  ]\n");
-	for (size_t i = 0; i < registred_modules.size; i++) {
-		struct LolModule* module = registred_modules.modules[i];
+	for (size_t i = 0; i < runtime->modules.size; i++) {
+		struct LolModule* module = runtime->modules.modules[i];
 		fprintf(p, "subgraph cluster_module_%zu {\nlabel=\"%s\"\n", i, module->descriptor->name);
 		for (size_t j = 0; j < module->classes.size; j++) {
 			struct LolClass* klass = module->classes.classes[j];
@@ -856,7 +866,7 @@ static struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* m
 	return privRegisterClass(module, descriptor, true);
 }
 
-static void lolbj_register_module(struct LolModule* module)
+static void lolbj_register_module(struct LolRuntime* runtime, struct LolModule* module)
 {
 	if (module == NULL) {
 		return;
@@ -866,7 +876,7 @@ static void lolbj_register_module(struct LolModule* module)
 		module->descriptor->init_module(module);
 	}
 
-	registred_modules.modules[registred_modules.size++] = module;
+	runtime->modules.modules[runtime->modules.size++] = module;
 }
 
 struct Lolbject* lolbj_cast(struct LolClass* klass, struct Lolbject* obj)

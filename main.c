@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 	(void)argc;
 	(void)argv;
 
-	lolbj_init_runtime();
+	struct LolRuntime* runtime = lolbj_init_runtime();
 
 	//lolbj_print_class_diagram();
 
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 
 		if (module) {
 			LOL(LolRuntime, "registerModule", module);
-			lolbj_print_class_diagram();
+			lolbj_print_class_diagram(runtime);
 		}
 	}
 
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 	RELEASE(lengthValue);
 	RELEASE(nameValueCaller);
 
-	lolbj_shutdown_runtime();
+	lolbj_shutdown_runtime(runtime);
 
 	return 0;
 }
