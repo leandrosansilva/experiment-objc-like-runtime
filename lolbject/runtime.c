@@ -102,9 +102,13 @@ static struct LolRuntime* lol_runtime_object_size_selector(struct Lolbject* self
 	return NULL;
 }
 
+static struct LolClass* find_class_in_module(struct LolModule* module, const char* className);
+
 static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* self, va_list arguments)
 {
-	struct LolModule* module = lolbj_send_message_with_arguments(lolbj_send_message(LolModule, "alloc"), "initWithDescriptor", arguments);
+	struct LolClass* moduleClass = find_class_in_module(self->coreModule, "Class");
+	assert(moduleClass);
+	struct LolModule* module = lolbj_send_message_with_arguments(lolbj_send_message(moduleClass, "alloc"), "initWithDescriptor", arguments);
 
 	// Agh!!!!!, small hack to prevent change in the API. It looks dirty, I know
 	if (module != NULL) {
@@ -202,30 +206,38 @@ static struct LolModule* lol_runtime_load_module_from_file_selector(struct LolRu
 	return module;
 }
 
-static struct LolModule* lol_module_class_with_name_selector(struct LolModule* self, va_list arguments)
+static struct LolClass* find_class_in_module(struct LolModule* module, const char* className)
+{
+	for (size_t i = 0; i < module->classes.size; i++) {
+		if (strcmp(lolbj_class_name(module->classes.classes[i]), className) == 0) {
+				return module->classes.classes[i];
+		}
+	}
+
+	return NULL;
+}
+
+static struct LolClass* lol_module_class_with_name_selector(struct LolModule* self, va_list arguments)
 {
 	struct String* klassNameObj = va_arg(arguments, struct String*);
 	struct Box* klassNameBox = lolbj_send_message(klassNameObj, "boxedValue");
 
 	const char* klassName = (const char*)klassNameBox->value;
 
-	for (size_t i = 0; i < self->classes.size; i++) {
-		if (strcmp(lolbj_class_name(self->classes.classes[i]), klassName) == 0) {
-				RELEASE(klassNameBox);
-				RELEASE(klassNameObj);
-				return self->classes.classes[i];
-		}
-	}
+	struct LolClass* klass = find_class_in_module(self, klassName);
 
 	RELEASE(klassNameBox);
 	RELEASE(klassNameObj);
 
-	return NULL;
+	return klass;
 }
 
 static struct LolModule* lol_module_init_with_descriptor(struct LolModule* self, va_list arguments)
 {
-	if (self = lolbj_send_message_to_super(self, LolModule, "init")) {
+	struct LolClass* moduleClass = find_class_in_module(self, "LolModule");
+	assert(moduleClass);
+
+	if (self = lolbj_send_message_to_super(self, moduleClass, "init")) {
 		struct LolModule_Descriptor* descriptor = va_arg(arguments, struct LolModule_Descriptor*);
 		self->descriptor = descriptor;
 	}
@@ -244,6 +256,12 @@ static void privUnloadClass(struct LolClass* klass);
 
 static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_list arguments)
 {
+	struct LolRuntime* runtime = lolbj_send_message(self, "runtime");
+	assert(runtime != NULL);
+
+	struct LolClass* moduleClass = find_class_in_module(self, "LolModule");
+	assert(moduleClass);
+
 	if (self->descriptor->shutdown_module != NULL) {
 		self->descriptor->shutdown_module(self);
 	}
@@ -259,13 +277,9 @@ static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_
 		}
 	}
 
-	struct LolRuntime* runtime = lolbj_send_message(self, "runtime");
-
-	assert(runtime != NULL);
-
 	return self == runtime->coreModule
 		? NULL
-		: lolbj_send_message_to_super(self, LolModule, "dealloc");
+		: lolbj_send_message_to_super(self, moduleClass, "dealloc");
 }
 
 static struct LolModule* lol_module_get_runtime_selector(struct LolModule* self, va_list arguments)
@@ -424,7 +438,7 @@ struct LolRuntime* lolbj_init_runtime()
 	Lolbject = privCreateClass(&objectDescriptor, true);
 	DefaultAllocator = privCreateClass(&defaultAllocatorDescriptor, true);
 	struct LolClass* runtimeClass = privCreateClass(&runtimeDescriptor, true);
-	LolModule = privCreateClass(&lolModuleDescriptor, true);
+	struct LolClass* moduleClass  = privCreateClass(&lolModuleDescriptor, true);
 
 	struct LolRuntime* runtime = lolbj_send_message(lolbj_send_message(runtimeClass, "alloc"), "init");
 
@@ -436,13 +450,13 @@ struct LolRuntime* lolbj_init_runtime()
 	Lolbject->priv->module = runtime->coreModule;
 	DefaultAllocator->priv->module = runtime->coreModule;
 	runtimeClass->priv->module = runtime->coreModule;
-	LolModule->priv->module = runtime->coreModule;
+	moduleClass->priv->module = runtime->coreModule;
 
 #define ADD_CLASS(__klass__) runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = __klass__
 	ADD_CLASS(Class);
 	ADD_CLASS(Lolbject);
 	ADD_CLASS(runtimeClass);
-	ADD_CLASS(LolModule);
+	ADD_CLASS(moduleClass);
 	ADD_CLASS(DefaultAllocator);
 #undef ADD_CLASS
 
