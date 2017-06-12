@@ -184,7 +184,7 @@ static struct LolModule* lol_runtime_load_module_from_file_selector(struct LolRu
 		return NULL;
 	}
 
-	struct LolModule* (*init_module)() = dlsym(handler, "init_lol_module");
+	struct LolModule* (*init_module)(struct LolRuntime*) = dlsym(handler, "init_lol_module");
 
 	if (init_module == NULL) {
 		fprintf(stderr, "Error opening module from file %s: %s\n", f, dlerror());
@@ -194,9 +194,7 @@ static struct LolModule* lol_runtime_load_module_from_file_selector(struct LolRu
 		return NULL;
 	}
 
-	// FIXME: pass runtime information to the module, so it can decide not to load, for instance
-	// based on compatibility issues
-	struct LolModule* module = init_module();
+	struct LolModule* module = init_module(self);
 	module->handler = handler;
 	module->runtime = self;
 
@@ -287,7 +285,7 @@ static struct LolModule* lol_module_get_runtime_selector(struct LolModule* self,
 	return self->runtime;
 }
 
-static void lolbj_runtime_initializer(struct LolClass* klass)
+static void lolbj_runtime_initializer(struct LolRuntime*, struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 	lolbj_add_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
@@ -299,15 +297,15 @@ static void lolbj_runtime_initializer(struct LolClass* klass)
 	lolbj_add_selector(klass, "loadModuleFromFile", lol_runtime_load_module_from_file_selector);
 }
 
-static struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
+static struct LolClass* register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor);
 
 static struct LolClass* module_register_class_with_selector_selector(struct LolModule* self, va_list arguments)
 {
 	struct LolClass_Descriptor* descriptor = va_arg(arguments, struct LolClass_Descriptor*);
-	return lolbj_register_class_with_descriptor(self, descriptor);
+	return register_class_with_descriptor(self, descriptor);
 }
 
-static void lolbj_module_initializer(struct LolClass* klass)
+static void lolbj_module_initializer(struct LolRuntime* runtime, struct LolClass* klass)
 {
 	lolbj_set_class_parent(klass, Lolbject);
 	lolbj_add_selector(klass, "registerClassWithDescriptor", module_register_class_with_selector_selector);
@@ -322,15 +320,15 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 
 static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, bool isNormalClass);
 
-static void lolbj_runtime_initializer(struct LolClass* klass);
+static void lolbj_runtime_initializer(struct LolRuntime* runtime, struct LolClass* klass);
 
-static void lolbj_class_initializer(struct LolClass* klass);
+static void lolbj_class_initializer(struct LolRuntime* runtime, struct LolClass* klass);
 
 static void privAddSelector(struct LolClass* klass, const char* selectorName, const char* propertyName, lolbj_selector selector);
 
-static void lolbj_object_initializer_wrapper(struct LolClass* klass)
+static void lolbj_object_initializer_wrapper(struct LolRuntime* runtime, struct LolClass* klass)
 {
-	lolbj_object_initializer(klass);
+	lolbj_object_initializer(runtime, klass);
 	privAddSelector(lolbj_class_for_object(klass), "module", NULL, lol_class_get_module_selector);
 }
 
@@ -460,7 +458,12 @@ struct LolRuntime* lolbj_init_runtime()
 	ADD_CLASS(DefaultAllocator);
 #undef ADD_CLASS
 
-#define REGISTER_CLASS(__klass__, __descriptor__) __klass__ = lolbj_register_class_with_descriptor(runtime->coreModule, &__descriptor__)
+	assert(descriptor->initializer && "class initializer callback must be defined!");
+	descriptor->initializer(runtime, klass);
+
+
+
+#define REGISTER_CLASS(__klass__, __descriptor__) __klass__ = register_class_with_descriptor(runtime->coreModule, &__descriptor__)
 	REGISTER_CLASS(String, stringDescriptor);
 	REGISTER_CLASS(Number, numberDescriptor);
 	REGISTER_CLASS(Box, boxDescriptor);
@@ -687,7 +690,7 @@ static void lolbj_class_initializer(struct LolClass* klass)
 	lolbj_set_class_parent(klass, NULL);
 }
 
-static void privInitializeClass(struct LolClass* klass, lolbj_class_initializer_callback initializer, bool createStatic)
+static void privInitializeClass(struct LolClass* klass, bool createStatic)
 {
 	uint8_t* baseAddress = (uint8_t*)klass;
 	size_t staticClassOffset = sizeof(struct LolClass);
@@ -709,16 +712,12 @@ static void privInitializeClass(struct LolClass* klass, lolbj_class_initializer_
 		lolbj_set_class_parent(klass->proto.klass, Class);
 		klass->proto.klass->proto.priv->tag = lolbj_runtime_type_class;
 	}
-
-	assert(initializer && "class initializer callback must be defined!");
-
-	initializer(klass);
 }
 
-static void privUnloadClass(struct LolClass* klass)
+static void privUnloadClass(struct LolRuntime* runtime, struct LolClass* klass)
 {
 	if (klass->priv->descriptor != NULL && klass->priv->descriptor->unloader != NULL) {
-		klass->priv->descriptor->unloader(klass);
+		klass->priv->descriptor->unloader(runtime, klass);
 	}
 
 	free(klass);
@@ -867,7 +866,7 @@ static struct LolClass* privCreateClass(struct LolClass_Descriptor *descriptor, 
 	struct LolClass* klass = malloc(totalSize);
 	memset(klass, 0, totalSize);
 
-	privInitializeClass(klass, descriptor->initializer, isNormalClass);
+	privInitializeClass(klass, isNormalClass);
 	lolbj_set_class_name(klass, descriptor->name);
 
 	klass->priv->descriptor = descriptor;
@@ -886,7 +885,7 @@ static struct LolClass* privRegisterClass(struct LolModule* module, struct LolCl
 	return klass;
 }
 
-static struct LolClass* lolbj_register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor)
+static struct LolClass* register_class_with_descriptor(struct LolModule* module, struct LolClass_Descriptor *descriptor)
 {
 	return privRegisterClass(module, descriptor, true);
 }

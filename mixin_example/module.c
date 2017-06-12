@@ -19,7 +19,7 @@ void unload_class_b(struct LolClass* klass)
 	printf("unloading ClassB!\n");
 }
 
-struct LolModule* init_lol_module()
+struct LolModule* init_lol_module(struct LolRuntime* runtime)
 {	
 	static struct LolClass_Descriptor classADescriptor = {
 		.name = "ClassA",
@@ -56,7 +56,7 @@ struct LolModule* init_lol_module()
 		.shutdown_module = unload_module
 	};
 
-	mixin_module = lolbj_send_message(LolRuntime, "createModuleWithDescriptor", &moduleDescriptor);
+	mixin_module = lolbj_send_message(runtime, "createModuleWithDescriptor", &moduleDescriptor);
 
 	assert(mixin_module);
 

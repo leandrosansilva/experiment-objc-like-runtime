@@ -4,6 +4,7 @@
 #include <lolbject/String.h>
 
 #include <stdio.h>
+#include <assert.h>
 
 struct ClassB
 {
@@ -26,7 +27,10 @@ static struct ClassB* hello_selector(struct ClassB* self, va_list arguments)
 
 void lolbj_class_b_initializer(struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, lolbj_send_message(lolbj_send_message(LolRuntime, "coreModule"), "classWithName", STRING("Lolbject")));
+	struct LolRuntime* runtime = LOL(LOL(klass, STRING("module")), STRING("runtime"));
+	assert(runtime);
+
+	lolbj_set_class_parent(klass, lolbj_send_message(lolbj_send_message(runtime, "coreModule"), "classWithName", STRING("Lolbject")));
 	lolbj_set_class_name(klass, "ClassB");
 
 	lolbj_add_class_selector(klass, "objectSize", object_size_selector);

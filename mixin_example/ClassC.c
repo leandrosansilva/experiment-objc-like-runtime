@@ -7,6 +7,7 @@
 #include <lolbject/String.h>
 
 #include <stddef.h>
+#include <assert.h>
 
 // Selectors
 static struct Lolbject* object_size_selector(struct Lolbject* self, va_list arguments)
@@ -36,7 +37,10 @@ static struct Lolbject* dealloc_selector(struct ClassC* self, va_list arguments)
 
 void lolbj_class_c_initializer(struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, lolbj_send_message(lolbj_send_message(LolRuntime, "coreModule"), "classWithName", STRING("Lolbject")));
+	struct LolRuntime* runtime = LOL(LOL(klass, STRING("module")), STRING("runtime"));
+	assert(runtime);
+
+	lolbj_set_class_parent(klass, lolbj_send_message(lolbj_send_message(runtime, "coreModule"), "classWithName", STRING("Lolbject")));
 	lolbj_add_class_selector(klass, "objectSize", object_size_selector);
 
 	lolbj_add_selector(klass, "init", init_selector);
