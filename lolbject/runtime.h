@@ -9,13 +9,14 @@
 struct Lolbject;
 struct LolClass;
 struct LolModule;
+struct LolRuntime;
 
 LOL_EXPORT struct LolClass* Lolbject;
 
 struct LolClass_Descriptor;
 
-typedef void (*lolbj_class_initializer_callback)(struct LolClass*);
-typedef void (*lolbj_class_unloader_callback)(struct LolClass*);
+typedef void (*lolbj_class_initializer_callback)(struct LolRuntime*, struct LolClass*);
+typedef void (*lolbj_class_unloader_callback)(struct LolRuntime*, struct LolClass*);
 
 struct LolModule_Descriptor
 {

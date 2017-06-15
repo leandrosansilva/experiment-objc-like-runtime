@@ -118,25 +118,30 @@ static struct LolModule* lol_runtime_create_module_selector(struct LolRuntime* s
 	return module;
 }
 
+static struct LolModule* privRuntimeModuleWithName(struct LolRuntime* self, const char* moduleName)
+{
+	for (size_t i = 0; i < self->modules.size; i++) {
+		struct LolModule* module = self->modules.modules[i];
+		if (strcmp(module->descriptor->name, moduleName) == 0) {
+			return module;
+		}
+	}
+
+	return NULL;
+}
+
 static struct LolModule* lol_runtime_module_with_name_selector(struct LolRuntime* self, va_list arguments)
 {
 	struct String* moduleNameObj = va_arg(arguments, struct String*);
 	struct Box* moduleNameBox = lolbj_send_message(moduleNameObj, "boxedValue");
 	const char* moduleName = (const char*)moduleNameBox->value;
 
-	for (size_t i = 0; i < self->modules.size; i++) {
-		struct LolModule* module = self->modules.modules[i];
-		if (strcmp(module->descriptor->name, moduleName) == 0) {
-			RELEASE(moduleNameBox);
-			RELEASE(moduleNameObj);
-			return module;
-		}
-	}
+	struct LolModule* module = privRuntimeModuleWithName(self, moduleName);
 
 	RELEASE(moduleNameBox);
 	RELEASE(moduleNameObj);
 
-	return NULL;
+	return module;
 }
 
 static struct LolModule* lol_class_get_module_selector(struct LolClass* klass, va_list arguments)
@@ -250,7 +255,7 @@ static struct LolModule* lol_module_object_size_selector(struct Lolbject* self, 
 	return NULL;
 }
 
-static void privUnloadClass(struct LolClass* klass);
+static void privUnloadClass(struct LolRuntime* runtime, struct LolClass* klass);
 
 static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_list arguments)
 {
@@ -265,7 +270,8 @@ static struct LolModule* lol_module_dealloc_selector(struct LolModule* self, va_
 	}
 
 	for (size_t j = self->classes.size; j > 0; j--) {
-		privUnloadClass(self->classes.classes[j - 1]);
+		privUnloadClass(runtime, self->classes.classes[j - 1]);
+		free(self->classes.classes[j - 1]);
 		self->classes.classes[j - 1] = NULL;
 	}
 
@@ -285,9 +291,8 @@ static struct LolModule* lol_module_get_runtime_selector(struct LolModule* self,
 	return self->runtime;
 }
 
-static void lolbj_runtime_initializer(struct LolRuntime*, struct LolClass* klass)
+static void lolbj_runtime_initializer(struct LolRuntime* runtime, struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, Lolbject);
 	lolbj_add_selector(klass, "createModuleWithDescriptor", lol_runtime_create_module_selector);
 	lolbj_add_selector(klass, "objectSize", lol_runtime_object_size_selector);
 	lolbj_add_selector(klass, "moduleWithName", lol_runtime_module_with_name_selector);
@@ -432,11 +437,17 @@ struct LolRuntime* lolbj_init_runtime()
 		.shutdown_module = NULL
 	};
 
-	Class = privCreateClass(&classDescriptor, false);
-	Lolbject = privCreateClass(&objectDescriptor, true);
-	DefaultAllocator = privCreateClass(&defaultAllocatorDescriptor, true);
-	struct LolClass* runtimeClass = privCreateClass(&runtimeDescriptor, true);
-	struct LolClass* moduleClass  = privCreateClass(&lolModuleDescriptor, true);
+#define CREATE_BASE_CLASS(__name__, __descriptor__, __create_static__, __parent__) \
+	struct LolClass* __name__ = privCreateClass(&__descriptor__, __create_static__); \
+	lolbj_set_class_parent(__name__, __parent__);
+
+	CREATE_BASE_CLASS(Class, classDescriptor, false, NULL);
+	CREATE_BASE_CLASS(Lolbject, objectDescriptor, true, NULL);
+	CREATE_BASE_CLASS(DefaultAllocator, defaultAllocatorDescriptor, true, Lolbject);
+	CREATE_BASE_CLASS(runtimeClass, runtimeDescriptor, true, Lolbject);
+	CREATE_BASE_CLASS(moduleClass, lolModuleDescriptor, true, Lolbject);
+
+#undef CREATE_BASE_CLASS
 
 	struct LolRuntime* runtime = lolbj_send_message(lolbj_send_message(runtimeClass, "alloc"), "init");
 
@@ -444,26 +455,23 @@ struct LolRuntime* lolbj_init_runtime()
 
 	runtime->coreModule = lolbj_send_message(runtime, "createModuleWithDescriptor", &coreDescriptor);
 
-	Class->priv->module = runtime->coreModule;
-	Lolbject->priv->module = runtime->coreModule;
-	DefaultAllocator->priv->module = runtime->coreModule;
-	runtimeClass->priv->module = runtime->coreModule;
-	moduleClass->priv->module = runtime->coreModule;
+#define INTIALIZE_AND_ADD_CLASS(__klass__, __descriptor__)\
+	runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = __klass__; \
+	__klass__->priv->module = runtime->coreModule; \
+	assert(__descriptor__.initializer && "class initializer callback must be defined!"); \
+	__descriptor__.initializer(runtime, __klass__)
 
-#define ADD_CLASS(__klass__) runtime->coreModule->classes.classes[runtime->coreModule->classes.size++] = __klass__
-	ADD_CLASS(Class);
-	ADD_CLASS(Lolbject);
-	ADD_CLASS(runtimeClass);
-	ADD_CLASS(moduleClass);
-	ADD_CLASS(DefaultAllocator);
-#undef ADD_CLASS
+	INTIALIZE_AND_ADD_CLASS(Class, classDescriptor);
+	INTIALIZE_AND_ADD_CLASS(Lolbject, objectDescriptor);
+	INTIALIZE_AND_ADD_CLASS(runtimeClass, runtimeDescriptor);
+	INTIALIZE_AND_ADD_CLASS(moduleClass, lolModuleDescriptor);
+	INTIALIZE_AND_ADD_CLASS(DefaultAllocator, defaultAllocatorDescriptor);
+#undef INTIALIZE_AND_ADD_CLASS
 
-	assert(descriptor->initializer && "class initializer callback must be defined!");
-	descriptor->initializer(runtime, klass);
+#define REGISTER_CLASS(__klass__, __descriptor__)\
+	__klass__ = register_class_with_descriptor(runtime->coreModule, &__descriptor__); \
+	lolbj_set_class_parent(__klass__, Lolbject);
 
-
-
-#define REGISTER_CLASS(__klass__, __descriptor__) __klass__ = register_class_with_descriptor(runtime->coreModule, &__descriptor__)
 	REGISTER_CLASS(String, stringDescriptor);
 	REGISTER_CLASS(Number, numberDescriptor);
 	REGISTER_CLASS(Box, boxDescriptor);
@@ -494,8 +502,7 @@ static void privDeleteModule(struct LolModule* module)
 	assert(runtime != NULL);
 
 	if (module == runtime->coreModule) {
-		privDeleteCoreModule(module);
-		return;
+		return privDeleteCoreModule(module);
 	}
 
 	RELEASE(module);
@@ -685,9 +692,8 @@ struct Lolbject* lolbj_send_message(struct Lolbject* obj, const char* selectorNa
 	return result;
 }
 
-static void lolbj_class_initializer(struct LolClass* klass)
+static void lolbj_class_initializer(struct LolRuntime* runtime, struct LolClass* klass)
 {
-	lolbj_set_class_parent(klass, NULL);
 }
 
 static void privInitializeClass(struct LolClass* klass, bool createStatic)
@@ -719,8 +725,6 @@ static void privUnloadClass(struct LolRuntime* runtime, struct LolClass* klass)
 	if (klass->priv->descriptor != NULL && klass->priv->descriptor->unloader != NULL) {
 		klass->priv->descriptor->unloader(runtime, klass);
 	}
-
-	free(klass);
 }
 
 void lolbj_set_class_parent(struct LolClass* klass, struct LolClass* parent)
