@@ -2,7 +2,5 @@
 
 #include <lolbject/runtime.h>
 
-LOL_EXPORT struct LolClass* DefaultAllocator;
-
-void lolbj_default_allocator_initializer(struct LolClass* klass);
+void lolbj_default_allocator_initializer(struct LolRuntime* runtime, struct LolClass* klass);
 

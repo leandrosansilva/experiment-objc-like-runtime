@@ -468,18 +468,18 @@ struct LolRuntime* lolbj_init_runtime()
 	INTIALIZE_AND_ADD_CLASS(DefaultAllocator, defaultAllocatorDescriptor);
 #undef INTIALIZE_AND_ADD_CLASS
 
-#define REGISTER_CLASS(__klass__, __descriptor__)\
-	__klass__ = register_class_with_descriptor(runtime->coreModule, &__descriptor__); \
-	lolbj_set_class_parent(__klass__, Lolbject);
+#define REGISTER_CLASS(__descriptor__) {\
+	struct LolClass* klass = register_class_with_descriptor(runtime->coreModule, &__descriptor__); \
+	lolbj_set_class_parent(klass, Lolbject); }
 
-	REGISTER_CLASS(String, stringDescriptor);
-	REGISTER_CLASS(Number, numberDescriptor);
-	REGISTER_CLASS(Box, boxDescriptor);
-	REGISTER_CLASS(MutableArray, mutableArrayDescriptor);
-	REGISTER_CLASS(Array, arrayDescriptor);
-	REGISTER_CLASS(TreeObject, treeObjectDescriptor);
-	REGISTER_CLASS(SignalSender, signalSenderDescriptor);
-	REGISTER_CLASS(Anonymous, anonymousDescriptor);
+	REGISTER_CLASS(stringDescriptor);
+	REGISTER_CLASS(numberDescriptor);
+	REGISTER_CLASS(boxDescriptor);
+	REGISTER_CLASS(mutableArrayDescriptor);
+	REGISTER_CLASS(arrayDescriptor);
+	REGISTER_CLASS(treeObjectDescriptor);
+	REGISTER_CLASS(signalSenderDescriptor);
+	REGISTER_CLASS(anonymousDescriptor);
 #undef REGISTER_CLASS
 
 	lolbj_register_module(runtime, runtime->coreModule);

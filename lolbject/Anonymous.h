@@ -2,6 +2,4 @@
 
 #include <lolbject/Class.h>
 
-void lolbj_anonymous_initializer(struct LolClass* klass);
-
-LOL_EXPORT struct LolClass* Anonymous;
+void lolbj_anonymous_initializer(struct LolRuntime* runtime, struct LolClass* klass);

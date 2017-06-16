@@ -12,6 +12,4 @@ struct Lolbject
 	struct Lolbject_Private* priv;
 };
 
-LOL_EXPORT struct LolClass* Lolbject;
-
 void lolbj_object_initializer(struct LolRuntime* runtime, struct LolClass* klass);

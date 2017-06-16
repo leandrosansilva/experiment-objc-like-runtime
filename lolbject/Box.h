@@ -9,6 +9,4 @@ struct Box
 	void* value;
 };
 
-void lolbj_box_initializer(struct LolClass* klass);
-
-LOL_EXPORT struct LolClass* Box;
+void lolbj_box_initializer(struct LolRuntime* runtime, struct LolClass* klass);
